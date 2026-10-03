@@ -23,17 +23,15 @@
   
   --navy: #1e3a8a;
   --navy-dark: #0f204b;
-  --track: #b91c1c; /* Rouge tartan athlé */
+  --track: #b91c1c;
   --track-light: #fef2f2;
   --green: #15803d;
   --green-bg: #ecfdf5;
   --yellow: #b45309;
   --yellow-bg: #fefce8;
-  --amber: #f59e0b;
 
   --radius-sm: 6px;
   --radius-md: 10px;
-  --radius-lg: 14px;
 }
 
 * { box-sizing: border-box; }
@@ -50,7 +48,7 @@ button, input, select { font: inherit; }
 button { touch-action: manipulation; cursor: pointer; transition: all 0.15s ease; }
 .hidden { display: none !important; }
 
-/* HEADER OFFICIEL DE COURSE */
+/* HEADER OFFICIEL */
 header {
   position: sticky;
   top: 0;
@@ -109,7 +107,7 @@ header {
 .status.ok { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
 .status.err { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
 
-/* NAVIGATION TYPE PISTE D'ATHLÉ */
+/* NAVIGATION */
 nav {
   display: flex;
   gap: 4px;
@@ -226,7 +224,7 @@ input:focus, select:focus {
   font-size: clamp(3.2rem, 13vw, 5.2rem);
   line-height: 1;
   font-weight: 800;
-  color: #fbbf24; /* Ambre chrono officiel */
+  color: #fbbf24;
   text-shadow: 0 0 16px rgba(251, 191, 36, 0.35);
   font-variant-numeric: tabular-nums;
 }
@@ -709,7 +707,7 @@ th {
 
   <div class="card">
     <h2>📥 1. Importer les élèves</h2>
-    <div class="muted" style="margin-bottom:10px">Format attendu : <b>Dossard;Nom;Prenom;Sexe;Classe</b> (ou Division / Niveau)[cite: 1].</div>
+    <div class="muted" style="margin-bottom:10px">Format accepté : <b>Dossard;Nom;Prenom;Sexe;Classe</b> (ou Division / Niveau)[cite: 1]. Encodage UTF-8 et exports Excel supportés.</div>
     <div class="importbox">
       <input id="csvFile" class="file" type="file" accept=".csv,text/csv,text/plain">
       <button id="importBtn" class="btn">Choisir un fichier CSV</button>
@@ -745,9 +743,7 @@ th {
 </section>
 </main>
 
-<!-- ======================================================== -->
-<!-- ÉCRAN DU STADE EN DIRECT (10 COUREURS)                   -->
-<!-- ======================================================== -->
+<!-- ÉCRAN DU STADE EN DIRECT (10 COUREURS) -->
 <section id="screenPage" class="screenPage">
   <div class="screen">
     <div class="screen-header-tag">
@@ -949,6 +945,7 @@ if($("newRaceBtn")) $("newRaceBtn").onclick=async()=>{
   listenCourse();
 };
 
+/* SCAN RAPIDE SANS POP-UP */
 async function recordArrival(raw){
   let bib = String(raw??"").trim().replace(/[^\d]/g,"");
   if(!bib) return;
@@ -1062,9 +1059,7 @@ function renderResults(){
   `).join("")||"<tr><td colspan=6 style='text-align:center;color:#94a3b8;padding:36px'>Aucune arrivée pour le moment</td></tr>";
 }
 
-/* ======================================================== */
-/* RENDU GRAND ÉCRAN STADE : 10 DERNIERS COUREURS           */
-/* ======================================================== */
+/* RENDU GRAND ÉCRAN STADE : 10 DERNIERS COUREURS */
 function renderLive(){
   if(!$("liveList")) return;
   if($("screenCount")) $("screenCount").textContent=results.length;
@@ -1074,7 +1069,6 @@ function renderLive(){
     return;
   }
 
-  // Affiche les 10 dernières arrivées
   const derniers=[...results].sort((x,y)=>(Number(y.scannedAtMs)||0)-(Number(x.scannedAtMs)||0)).slice(0, 10);
 
   $("liveList").innerHTML=derniers.map(r=>{
@@ -1121,44 +1115,171 @@ if($("exportBtn")) $("exportBtn").onclick=()=>{
   URL.revokeObjectURL(a.href);
 };
 
-function splitCSV(l,sep){let out=[],cur="",q=false;for(let i=0;i<l.length;i++){let c=l[i];if(c==='"'&&l[i+1]==='"'){cur+='"';i++;continue}if(c==='"'){q=!q;continue}if(c===sep&&!q){out.push(cur.trim());cur=""}else cur+=c}out.push(cur.trim());return out}
-function parseCSV(t){
-  t=t.replace(/^\uFEFF/,"").replace(/\r/g,"");
-  const lines=t.split("\n").filter(x=>x.trim());
-  if(!lines.length)return[];
-  const sep=(lines[0].match(/;/g)||[]).length>=(lines[0].match(/,/g)||[]).length?";":",";
-  const h=splitCSV(lines[0],sep).map(x=>x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""));
-  const idx=arr=>{for(const n of arr){const i=h.findIndex(x=>x.includes(n));if(i>=0)return i}return -1};
-  const D=idx(["dossard","num"]),N=idx(["nom"]),P=idx(["prenom"]),C=idx(["classe","division","groupe","niveau"]),S=idx(["sexe","genre"]);
-  return lines.slice(1).map(l=>{
-    const a=splitCSV(l,sep),v=i=>i>=0?(a[i]||"").trim():"";
-    return{dossard:v(D),nom:v(N),prenom:v(P),classe:v(C),sexe:v(S).toUpperCase()};
-  }).filter(x=>x.dossard);
+/* LECTEUR CSV UNIVERSEL (UTF-8, UTF-16 EXCEL, TAB, POINTS-VIRGULES) */
+function readFileAsText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      let text = e.target.result || "";
+      if (text.includes('\0')) {
+        const r16 = new FileReader();
+        r16.onload = ev => resolve((ev.target.result || "").replace(/\0/g, ''));
+        r16.onerror = () => resolve(text.replace(/\0/g, ''));
+        r16.readAsText(file, 'utf-16le');
+        return;
+      }
+      resolve(text);
+    };
+    reader.onerror = reject;
+    reader.readAsText(file, 'utf-8');
+  });
 }
 
-if($("importBtn")) $("importBtn").onclick=()=>$("csvFile").click();
-if($("csvFile")) $("csvFile").onchange=async e=>{
-  const f=e.target.files[0];if(!f)return;
-  $("importInfo").textContent="Importation en cours…";
-  try{
-    const rows=parseCSV(await f.text());
-    if(!rows.length) throw new Error("Aucun élève trouvé.");
-    const col=getCourseRef(courseId).collection("students");
-    for(let i=0;i<rows.length;i+=400){
-      const b=db.batch();
-      rows.slice(i,i+400).forEach(s=>b.set(col.doc("dossard_"+s.dossard),s,{merge:true}));
+function splitCSVLine(line, sep) {
+  let out = [], cur = "", q = false;
+  for (let i = 0; i < line.length; i++) {
+    let c = line[i];
+    if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; continue; }
+    if (c === '"') { q = !q; continue; }
+    if (c === sep && !q) { out.push(cur.trim().replace(/^["']|["']$/g, '')); cur = ""; }
+    else cur += c;
+  }
+  out.push(cur.trim().replace(/^["']|["']$/g, ''));
+  return out;
+}
+
+function parseCSV(text) {
+  text = text.replace(/^\uFEFF/, "").replace(/\0/g, "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const rawLines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+  if (!rawLines.length) return [];
+
+  const delims = [';', '\t', ',', '|'];
+  let bestDelim = ';', maxScore = -1;
+  delims.forEach(d => {
+    let score = 0;
+    rawLines.slice(0, 5).forEach(l => score += (l.split(d).length - 1));
+    if (score > maxScore) { maxScore = score; bestDelim = d; }
+  });
+
+  const keywords = ["dossard", "doss", "num", "n°", "no", "bib", "nom", "prenom", "classe", "division", "niveau", "sexe", "genre"];
+  let headerIdx = -1;
+
+  for (let i = 0; i < Math.min(10, rawLines.length); i++) {
+    const normLine = rawLines[i].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    let matches = 0;
+    keywords.forEach(kw => { if (normLine.includes(kw)) matches++; });
+    if (matches >= 2) {
+      headerIdx = i;
+      break;
+    }
+  }
+
+  const cleanBib = val => String(val || "").trim().replace(/[^\d]/g, "");
+  let results = [];
+
+  if (headerIdx !== -1) {
+    const cols = splitCSVLine(rawLines[headerIdx], bestDelim).map(c => 
+      c.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    );
+
+    const findCol = kws => {
+      for (const kw of kws) {
+        const found = cols.findIndex(c => c.includes(kw));
+        if (found >= 0) return found;
+      }
+      return -1;
+    };
+
+    const D = findCol(["dossard", "doss", "num", "n°", "no", "bib", "id", "code"]);
+    const N = findCol(["nom"]);
+    const P = findCol(["prenom", "first"]);
+    const C = findCol(["classe", "division", "groupe", "section", "div"]);
+    const Niv = findCol(["niveau"]);
+    const S = findCol(["sexe", "genre", "civ"]);
+
+    for (let i = headerIdx + 1; i < rawLines.length; i++) {
+      const parts = splitCSVLine(rawLines[i], bestDelim);
+      const v = idx => (idx >= 0 && idx < parts.length) ? parts[idx].trim() : "";
+      const bib = cleanBib(v(D));
+
+      if (bib) {
+        let classeTxt = v(C);
+        if (v(Niv) && v(Niv) !== classeTxt) {
+          classeTxt = classeTxt ? `${classeTxt} (${v(Niv)})` : v(Niv);
+        }
+
+        results.push({
+          dossard: bib,
+          nom: v(N),
+          prenom: v(P),
+          classe: classeTxt,
+          sexe: v(S).toUpperCase().trim()
+        });
+      }
+    }
+  } else {
+    rawLines.forEach(l => {
+      const parts = splitCSVLine(l, bestDelim);
+      let bib = "", nom = "", prenom = "", sexe = "", classe = "";
+      parts.forEach(p => {
+        const onlyNum = cleanBib(p);
+        if (onlyNum && !bib && p === onlyNum) {
+          bib = onlyNum;
+        } else if (["M", "F", "G", "H", "GARCON", "FILLE"].includes(p.toUpperCase()) && !sexe) {
+          sexe = p.toUpperCase();
+        } else if (!nom) {
+          nom = p;
+        } else if (!prenom) {
+          prenom = p;
+        } else if (!classe) {
+          classe = p;
+        }
+      });
+      if (bib) {
+        results.push({ dossard: bib, nom, prenom, classe, sexe });
+      }
+    });
+  }
+
+  return results;
+}
+
+if($("importBtn")) $("importBtn").onclick = () => $("csvFile").click();
+
+if($("csvFile")) $("csvFile").onchange = async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  $("importInfo").textContent = "Lecture et analyse du fichier…";
+
+  try {
+    const rawText = await readFileAsText(f);
+    const rows = parseCSV(rawText);
+
+    if (!rows.length) {
+      throw new Error("Aucun dossard numérique détecté. Vérifiez le format du fichier.");
+    }
+
+    if (!courseId) await ensureActiveCourse();
+    $("importInfo").textContent = `Enregistrement de ${rows.length} élèves dans Firebase…`;
+
+    const col = getCourseRef(courseId).collection("students");
+    for (let i = 0; i < rows.length; i += 400) {
+      const b = db.batch();
+      rows.slice(i, i + 400).forEach(s => {
+        b.set(col.doc("dossard_" + s.dossard), s, { merge: true });
+      });
       await b.commit();
     }
-    $("importInfo").textContent=`✅ ${rows.length} élèves enregistrés.`;
-    e.target.value="";
-  }catch(err){
-    $("importInfo").textContent="❌ "+err.message;
+
+    $("importInfo").textContent = `✅ ${rows.length} élèves importés avec succès ! (Dossards prêts à imprimer)`;
+    e.target.value = "";
+  } catch (err) {
+    console.error(err);
+    $("importInfo").textContent = "❌ " + err.message;
   }
 };
 
-/* ======================================================== */
-/* MOTEUR D'IMPRESSION DYNAMIQUE (8, 10, 16, 24 DOSSARDS)   */
-/* ======================================================== */
+/* IMPRESSION MODULABLE DES DOSSARDS */
 $("printBibsBtn").onclick = () => {
   if (!students || students.length === 0) {
     alert("Veuillez d'abord importer un fichier CSV avec les élèves.");
