@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#070c14">
+<title>Cross EPS Live & Chrono</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root {
+  --bg: #070d18;
+  --surface: rgba(16, 26, 44, 0.75);
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --cyan: #38bdf8;
+  --cyan-glow: rgba(56, 189, 248, 0.25);
+  --blue: #2563eb;
+  --blue-hover: #1d4ed8;
+  --green: #10b981;
+  --green-glow: rgba(16, 185, 129, 0.3);
+  --red: #f43f5e;
+  --yellow: #f59e0b;
+  --yellow-glow: rgba(245, 158, 11, 0.3);
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg);
+  background-image: 
+    radial-gradient(at 10% 10%, rgba(37, 99, 235, 0.15) 0px, transparent 50%),
+    radial-gradient(at 90% 90%, rgba(56, 189, 248, 0.09) 0px, transparent 50%);
+  background-attachment: fixed;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select { font: inherit; }
+button { touch-action: manipulation; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.hidden { display: none !important; }
+
+/* SVG ICONS HELPER */
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25em;
+  height: 1.25em;
+  fill: currentColor;
+  vertical-align: middle;
+}
+
+/* HEADER */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(7, 13, 24, 0.88);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.brand { font-weight: 900; font-size: 1.15rem; display: flex; align-items: center; gap: 10px; }
+.brand .icon-wrap {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--blue), var(--cyan));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px var(--cyan-glow);
+}
+.brand .icon-wrap svg { width: 22px; height: 22px; fill: #fff; }
+.etab-badge {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: var(--cyan);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.status {
+  font-size: 0.75rem; font-weight: 800; padding: 6px 14px; border-radius: 999px;
+  background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);
+  display: flex; align-items: center; gap: 6px;
+}
+.status.ok { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3); }
+.status.err { background: rgba(244, 63, 94, 0.15); color: #fb7185; border-color: rgba(244, 63, 94, 0.3); }
+
+/* NAVIGATION */
+nav {
+  display: flex; gap: 6px; background: rgba(11, 19, 35, 0.92);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+  padding: 6px; position: sticky; top: 61px; z-index: 49;
+}
+nav button {
+  flex: 1; border: 0; background: transparent; color: var(--muted); font-weight: 700;
+  padding: 10px 8px; border-radius: 10px; font-size: 0.82rem;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+nav button svg { width: 17px; height: 17px; }
+nav button:hover { color: var(--text); background: rgba(255, 255, 255, 0.04); }
+nav button.active {
+  background: linear-gradient(135deg, var(--blue), #1e40af);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(37, 99, 255, 0.3);
+}
+
+/* LAYOUT */
+main { max-width: 980px; margin: auto; padding: 16px; }
+.tab { display: none; }
+.tab.active { display: block; animation: fadeIn 0.25s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+.card {
+  background: var(--surface);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+h2 { font-size: 1.15rem; font-weight: 800; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+h2 svg { width: 22px; height: 22px; fill: var(--cyan); }
+.muted { color: var(--muted); font-size: 0.84rem; line-height: 1.4; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.grow { flex: 1; }
+
+input, select {
+  background: #091322; color: #fff; border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 11px 14px; min-width: 0;
+}
+input:focus, select:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-glow); }
+
+.btn {
+  border: 0; border-radius: var(--radius-md); padding: 11px 18px; font-weight: 800;
+  color: #fff; background: var(--blue); min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn svg { width: 18px; height: 18px; }
+.btn:hover { background: var(--blue-hover); transform: translateY(-1px); }
+.btn.green { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 16px var(--green-glow); }
+.btn.red { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+.btn.ghost { background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); color: var(--text); }
+.btn.ghost:hover { background: rgba(255, 255, 255, 0.08); }
+.btn.yellow { background: linear-gradient(135deg, #d97706, #b45309); }
+
+/* CHRONOMÈTRE */
+.chrono {
+  background: radial-gradient(circle at center, #152744 0%, #07101e 100%);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  padding: 24px 16px;
+  margin: 16px 0;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6);
+  position: relative;
+}
+.digits {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(3.2rem, 14vw, 5.6rem);
+  line-height: 1; font-weight: 900; color: #e0f2fe; text-shadow: 0 0 35px var(--cyan-glow);
+}
+.state { margin-top: 10px; color: var(--muted); font-weight: 800; font-size: 0.78rem; letter-spacing: 2px; }
+
+.levels { display: flex; gap: 8px; flex-wrap: wrap; }
+.level {
+  border: 1px solid var(--border); background: rgba(255, 255, 255, 0.03);
+  border-radius: 999px; padding: 7px 14px; color: var(--muted); font-size: 0.8rem; font-weight: 700;
+  cursor: pointer;
+}
+.level:has(input:checked) { border-color: var(--cyan); background: rgba(56, 189, 248, 0.12); color: #fff; }
+.level input { accent-color: var(--cyan); }
+
+/* SCANNER & CAMERA */
+#reader { background: #000; border-radius: var(--radius-md); overflow: hidden; min-height: 200px; margin-top: 12px; }
+.scanline { font-size: 0.82rem; color: var(--muted); margin: 10px 0; }
+.manual { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; text-align: center; font-weight: 900; flex: 1; min-width: 140px; }
+.pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.pad button {
+  padding: 14px; border: 1px solid var(--border); background: linear-gradient(180deg, #16243b, #0f1828);
+  color: #fff; border-radius: var(--radius-md); font-family: 'JetBrains Mono', monospace; font-size: 1.35rem; font-weight: 800;
+}
+.pad button:active { background: #2563eb; }
+
+.last {
+  display: none; margin-top: 14px; border: 1px solid var(--green); background: rgba(16, 185, 129, 0.12);
+  padding: 14px 16px; border-radius: var(--radius-md);
+}
+.last.show { display: block; animation: pop 0.25s ease-out; }
+.last.duplicate { border-color: var(--yellow); background: rgba(245, 158, 11, 0.12); }
+@keyframes pop { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+
+/* TABLEAU DES CLASSEMENTS */
+.tablewrap { overflow: auto; max-height: 520px; border: 1px solid var(--border); border-radius: var(--radius-md); background: #091220; }
+table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+th, td { padding: 12px 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); text-align: left; white-space: nowrap; }
+th { position: sticky; top: 0; background: #0d1728; color: var(--muted); font-size: 0.72rem; text-transform: uppercase; font-weight: 800; }
+.rank-badge {
+  display: inline-flex; width: 32px; height: 32px; align-items: center; justify-content: center;
+  border-radius: 50%; background: #1a273e; font-weight: 900; font-family: 'JetBrains Mono', monospace;
+}
+.r1 { background: linear-gradient(135deg, #facc15, #ca8a04); color: #000; box-shadow: 0 0 14px rgba(250, 204, 21, 0.4); }
+.r2 { background: linear-gradient(135deg, #e2e8f0, #94a3b8); color: #000; }
+.r3 { background: linear-gradient(135deg, #f97316, #c2410c); color: #fff; }
+
+.importbox { border: 2px dashed rgba(255, 255, 255, 0.15); border-radius: var(--radius-md); padding: 18px; text-align: center; }
+.file { display: none; }
+.diag { display: grid; gap: 8px; }
+.diag div { padding: 11px; border-radius: var(--radius-sm); background: #08111e; font-size: 0.84rem; font-family: monospace; }
+.oktxt { color: #34d399; }
+.errtxt { color: #fb7185; }
+.waittxt { color: #fbbf24; }
+
+/* CARTES D'ACCÈS RAPIDE */
+.access-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+.access-box {
+  background: #091322; border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: 16px; display: flex; flex-direction: column; justify-content: space-between;
+}
+.access-box h4 { margin: 0 0 6px; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; }
+.access-box p { margin: 0 0 12px; font-size: 0.8rem; color: var(--muted); }
+.access-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ======================================================== */
+/* ÉCRAN EN DIRECT SCREEN (10 COUREURS + DÉFILEMENT FLUIDE) */
+/* ======================================================== */
+.screenPage { display: none; }
+.screenPage.active { display: block; }
+.screen {
+  min-height: 100vh; padding: 24px 20px;
+  background: radial-gradient(circle at 50% 0%, #152540 0%, #050912 100%);
+  text-align: center;
+}
+.screen-header-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: var(--muted); font-size: 0.9rem; font-weight: 700; letter-spacing: 1px;
+}
+.screen-header-tag svg { width: 20px; height: 20px; fill: var(--cyan); }
+.screen h1 { font-size: clamp(2rem, 5.5vw, 3.6rem); font-weight: 900; margin: 6px 0; }
+.screen .sub {
+  color: var(--cyan); font-weight: 800; font-size: 1.05rem; letter-spacing: 1.5px;
+  margin-bottom: 20px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.live { max-width: 1080px; margin: auto; text-align: left; }
+
+.liveitem {
+  display: grid; grid-template-columns: 85px 1fr auto; gap: 16px; align-items: center;
+  background: rgba(16, 26, 44, 0.7); backdrop-filter: blur(12px);
+  border: 2px solid var(--border); border-radius: var(--radius-lg);
+  padding: 14px 20px; margin: 10px 0; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  animation: slideIn 0.35s ease-out;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Ligne Fille : Halo Jaune/Or */
+.liveitem.fille {
+  border-color: rgba(245, 158, 11, 0.55);
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.16) 0%, rgba(16, 26, 44, 0.88) 45%);
+}
+.liveitem.fille .liveRank { color: #fbbf24; text-shadow: 0 0 20px var(--yellow-glow); }
+.liveitem.fille .liveGenderTag {
+  background: rgba(245, 158, 11, 0.2); color: #fde047; border: 1px solid rgba(245, 158, 11, 0.45);
+}
+
+/* Ligne Garçon : Halo Émeraude/Vert */
+.liveitem.garcon {
+  border-color: rgba(16, 185, 129, 0.55);
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.16) 0%, rgba(16, 26, 44, 0.88) 45%);
+}
+.liveitem.garcon .liveRank { color: #34d399; text-shadow: 0 0 20px var(--green-glow); }
+.liveitem.garcon .liveGenderTag {
+  background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.45);
+}
+
+.liveRank-wrap { text-align: center; }
+.liveRank {
+  font-family: 'JetBrains Mono', monospace; font-size: 2.1rem; font-weight: 900;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+}
+.medal-icon { width: 26px; height: 26px; }
+
+.liveName { font-size: clamp(1.2rem, 3.5vw, 2.1rem); font-weight: 900; line-height: 1.15; }
+.liveMeta {
+  color: var(--muted); font-size: 0.95rem; font-weight: 700; margin-top: 5px;
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+}
+.liveMeta .badge {
+  background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border);
+  padding: 3px 10px; border-radius: 8px; font-size: 0.88rem; color: #fff;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.liveMeta .badge svg { width: 14px; height: 14px; fill: var(--cyan); }
+.liveGenderTag {
+  padding: 3px 10px; border-radius: 8px; font-size: 0.82rem; font-weight: 800;
+  text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px;
+}
+.liveGenderTag svg { width: 13px; height: 13px; }
+.liveTime {
+  font-family: 'JetBrains Mono', monospace; font-size: clamp(1.3rem, 4vw, 2.4rem);
+  font-weight: 900; color: #e0f2fe; text-shadow: 0 0 20px var(--cyan-glow);
+  display: flex; align-items: center; gap: 8px;
+}
+.liveTime svg { width: 22px; height: 22px; fill: var(--cyan); opacity: 0.8; }
+.empty { padding: 90px 20px; color: var(--muted); text-align: center; font-size: 1.25rem; font-weight: 600; }
+
+/* ======================================================== */
+/* FEUILLE D'IMPRESSION UNIVERSELLE : 8, 10, 16, 24 DOSSARDS */
+/* ======================================================== */
+#printSection { display: none; }
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 6mm;
+  }
+  body { background: #fff !important; color: #000 !important; }
+  header, nav, main, #screenPage { display: none !important; }
+  #printSection { display: block !important; }
+
+  .bib-page {
+    page-break-after: always;
+    height: 284mm;
+    max-height: 284mm;
+    display: grid;
+    box-sizing: border-box;
+    gap: 3mm;
+  }
+
+  .bib-page.layout-8 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(4, 1fr); }
+  .bib-page.layout-10 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(5, 1fr); }
+  .bib-page.layout-16 { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); }
+  .bib-page.layout-24 { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(6, 1fr); }
+
+  .bib-card {
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 3mm 4mm;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #fff;
+    color: #000;
+    overflow: hidden;
+  }
+
+  .bib-top {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid #cbd5e1; padding-bottom: 1.5mm;
+  }
+  .bib-top .school-title { font-weight: 900; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bib-top .gender-tag { font-weight: 800; }
+
+  .bib-center {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 2mm; margin: auto 0;
+  }
+  .bib-number-wrap { flex: 1; text-align: center; }
+  .bib-number { font-family: 'JetBrains Mono', monospace; font-weight: 900; line-height: 1; letter-spacing: -1px; }
+
+  .bib-qr {
+    background: #fff; border: 1px solid #000; border-radius: 4px;
+    padding: 1mm; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .bib-qr img { width: 100% !important; height: 100% !important; display: block; }
+
+  .bib-bottom {
+    border-top: 1px solid #cbd5e1; padding-top: 1.5mm;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .bib-name { font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65%; }
+  .bib-class { font-weight: 800; white-space: nowrap; text-align: right; }
+
+  .layout-8 .school-title { font-size: 8pt; }
+  .layout-8 .gender-tag { font-size: 8pt; }
+  .layout-8 .bib-number { font-size: 40pt; }
+  .layout-8 .bib-name { font-size: 11pt; }
+  .layout-8 .bib-class { font-size: 10pt; }
+  .layout-8 .bib-qr { width: 23mm; height: 23mm; }
+
+  .layout-10 .school-title { font-size: 7.5pt; }
+  .layout-10 .gender-tag { font-size: 7.5pt; }
+  .layout-10 .bib-number { font-size: 32pt; }
+  .layout-10 .bib-name { font-size: 9.5pt; }
+  .layout-10 .bib-class { font-size: 9pt; }
+  .layout-10 .bib-qr { width: 20mm; height: 20mm; }
+
+  .layout-16 .school-title { font-size: 6pt; }
+  .layout-16 .gender-tag { font-size: 6pt; }
+  .layout-16 .bib-number { font-size: 26pt; }
+  .layout-16 .bib-name { font-size: 7.5pt; }
+  .layout-16 .bib-class { font-size: 7pt; }
+  .layout-16 .bib-qr { width: 15mm; height: 15mm; }
+
+  .layout-24 .card { padding: 2mm 2.5mm; }
+  .layout-24 .school-title { font-size: 5pt; }
+  .layout-24 .gender-tag { font-size: 5.5pt; }
+  .layout-24 .bib-number { font-size: 20pt; }
+  .layout-24 .bib-name { font-size: 6.5pt; }
+  .layout-24 .bib-class { font-size: 6pt; }
+  .layout-24 .bib-qr { width: 13mm; height: 13mm; }
+}
+
+@media(max-width: 600px) {
+  .access-grid { grid-template-columns: 1fr; }
+  .liveitem { grid-template-columns: 50px 1fr; gap: 10px; padding: 12px 14px; }
+  .liveRank { font-size: 1.6rem; }
+  .liveTime { grid-column: 2; text-align: right; justify-content: flex-end; }
+  .digits { font-size: 3.5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- DÉFINITIONS DES SYMBOLES SVG SPORTIFS -->
+<svg style="display:none">
+  <defs>
+    <!-- Coureur -->
+    <g id="i-runner">
+      <path d="M13.5 5.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM9.8 8.9 6 12.7l1.4 1.4 3.1-3.1 2.3 2.3-3.6 7.2 1.8.9 3.8-7.6c.3-.6.2-1.3-.2-1.8L12.9 10l1.7-1.7 3.3 2.1 1-1.7-3.8-2.4c-.6-.4-1.3-.4-1.8 0L9.8 8.9Zm-4.6 2.3-4 2 1 1.8 3.2-1.6-.2-2.2Z"/>
+    </g>
+    <!-- Chrono -->
+    <g id="i-chrono">
+      <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8Zm1-13h-2v6l5.2 3.1 1-1.7-4.2-2.4Z"/><path d="M10 0h4v2h-4z"/>
+    </g>
+    <!-- Trophée -->
+    <g id="i-trophy">
+      <path d="M19 4h-3V2H8v2H5a2 2 0 0 0-2 2v2a6 6 0 0 0 5 5.9V16a4 4 0 0 0 3 3.9V22H9v2h6v-2h-2v-2.1a4 4 0 0 0 3-3.9v-2.1A6 6 0 0 0 21 8V6a2 2 0 0 0-2-2ZM5 8V6h3v4.8A4 4 0 0 1 5 8Zm14 0a4 4 0 0 1-3 2.8V6h3Z"/>
+    </g>
+    <!-- Médaille -->
+    <g id="i-medal">
+      <path d="m12 11.5 2.2 4.5 4.9.7-3.6 3.5.8 4.9L12 22.8l-4.3 2.3.8-4.9-3.6-3.5 4.9-.7L12 11.5Z"/><path d="M8.5 1 5 8h3l2.5-5 2.5 5h3L12.5 1h-4Z"/>
+    </g>
+    <!-- Caméra / Scanner -->
+    <g id="i-camera">
+      <path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm8 3a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/>
+    </g>
+    <!-- Imprimante -->
+    <g id="i-print">
+      <path d="M19 8H5c-1.7 0-3 1.3-3 3v6h4v4h12v-4h4v-6c0-1.7-1.3-3-3-3Zm-3 11H8v-5h8v5Zm3-7c-.6 0-1-.4-1-1s.4-1 1-1 1 .4 1 1-.4 1-1 1Zm-1-9H6v4h12V3Z"/>
+    </g>
+    <!-- Dossard / Badge -->
+    <g id="i-bib">
+      <path d="M4 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H4Zm3 3h2v2H7V6Zm8 0h2v2h-2V6Zm-5 3a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"/>
+    </g>
+    <!-- Écran TV -->
+    <g id="i-tv">
+      <path d="M21 3H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7v2H8v2h8v-2h-2v-2h7a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Zm0 14H3V5h18Z"/>
+    </g>
+    <!-- Outils / Réglages -->
+    <g id="i-settings">
+      <path d="M19.4 13c.1-.6.1-1.3 0-2l2.1-1.6c.2-.2.2-.5.1-.7l-2-3.5c-.1-.2-.4-.3-.7-.2l-2.5 1c-.5-.4-1.1-.7-1.7-1l-.4-2.6A.5.5 0 0 0 13.8 2h-4c-.3 0-.5.2-.5.5l-.4 2.6c-.6.3-1.2.6-1.7 1l-2.5-1c-.2-.1-.5 0-.7.2l-2 3.5c-.1.2-.1.5.1.7L4.2 11c-.1.7-.1 1.4 0 2l-2.1 1.6c-.2.2-.2.5-.1.7l2 3.5c.1.2.4.3.7.2l2.5-1c.5.4 1.1.7 1.7 1l.4 2.6c0 .3.2.4.5.4h4c.3 0 .5-.1.5-.4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1c.2.1.5 0 .7-.2l2-3.5c.1-.2.1-.5-.1-.7L19.4 13ZM11.8 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/>
+    </g>
+    <!-- Flag arrivée -->
+    <g id="i-flag">
+      <path d="M4 2v19H2V2h2Zm2 2v10h14l-2.5-5L20 4H6Z"/>
+    </g>
+  </defs>
+</svg>
+
+<header id="appHeader">
+  <div class="brand">
+    <div class="icon-wrap">
+      <svg><use href="#i-runner"/></svg>
+    </div>
+    Cross EPS 
+    <span id="currentEtabDisplay" class="etab-badge"></span>
+  </div>
+  <div id="firebaseStatus" class="status">Connexion…</div>
+</header>
+
+<nav id="mainNav">
+  <button class="active" data-tab="liveTab">
+    <svg class="icon"><use href="#i-chrono"/></svg> Arrivées
+  </button>
+  <button data-tab="resultsTab">
+    <svg class="icon"><use href="#i-trophy"/></svg> Classement
+  </button>
+  <button data-tab="configTab">
+    <svg class="icon"><use href="#i-settings"/></svg> Établissement
+  </button>
+  <button data-tab="diagTab">
+    <svg class="icon"><use href="#i-flag"/></svg> Diagnostic
+  </button>
+</nav>
+
+<main id="normalApp">
+<section id="liveTab" class="tab active">
+  <div class="card">
+    <div class="row">
+      <input id="raceTitle" class="grow" value="Course 1" style="font-weight:700;font-size:1.05rem">
+      <button class="btn ghost" id="newRaceBtn">＋ Nouvelle course</button>
+    </div>
+    <div class="levels" style="margin-top:12px">
+      <label class="level"><input type="checkbox" value="CM2"> CM2</label>
+      <label class="level"><input type="checkbox" value="6E" checked> 6èmes</label>
+      <label class="level"><input type="checkbox" value="5E"> 5èmes</label>
+      <label class="level"><input type="checkbox" value="4E"> 4èmes</label>
+      <label class="level"><input type="checkbox" value="3E"> 3èmes</label>
+    </div>
+    
+    <div class="chrono">
+      <div id="chrono" class="digits">00:00.0</div>
+      <div id="raceState" class="state">EN ATTENTE DU DÉPART</div>
+    </div>
+    
+    <div class="row" style="justify-content:center">
+      <button id="startBtn" class="btn green">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg> Top départ
+      </button>
+      <button id="stopBtn" class="btn red">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M6 6h12v12H6z" fill="currentColor"/></svg> Clôturer
+      </button>
+      <button id="resetBtn" class="btn ghost">↻ Reset chrono</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><svg><use href="#i-camera"/></svg> Scanner les arrivées</h2>
+    <div class="row">
+      <select id="cameraSelect" class="grow"></select>
+      <button id="cameraBtn" class="btn">
+        <svg class="icon"><use href="#i-camera"/></svg> Activer Caméra
+      </button>
+    </div>
+    <div id="reader"></div>
+    <div class="scanline">Scanner continu fluide : présentez le dossard devant l'objectif.</div>
+    <div class="row" style="margin-top:10px">
+      <input id="manualBib" class="manual" type="number" inputmode="numeric" placeholder="Dossard" autocomplete="off">
+      <button id="manualBtn" class="btn">Valider</button>
+      <button id="backBtn" class="btn red">⌫</button>
+    </div>
+    <div class="pad">
+      <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button>
+      <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button>
+      <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button>
+      <button data-key="C">C</button><button data-key="0">0</button><button data-key="OK">✓</button>
+    </div>
+    <div id="lastScan" class="last"></div>
+  </div>
+</section>
+
+<section id="resultsTab" class="tab">
+  <div class="card">
+    <div class="row">
+      <div class="grow">
+        <h2><svg><use href="#i-trophy"/></svg> Classement officiel</h2>
+        <div id="resultCount" class="muted">0 arrivée enregistrée</div>
+      </div>
+      <button id="exportBtn" class="btn">⬇ Exporter CSV</button>
+    </div>
+    <div class="row" style="margin:14px 0">
+      <input id="filterText" class="grow" placeholder="Rechercher par coureur, classe ou dossard…">
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Pl.</th><th>Coureur</th><th>Genre</th><th>Classe</th><th>Dossard</th><th>Temps</th></tr></thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="configTab" class="tab">
+  <div class="card">
+    <h2><svg><use href="#i-settings"/></svg> Établissement actif</h2>
+    <div class="row">
+      <input id="etabInput" class="grow" placeholder="Identifiant (ex: clg-haignere)">
+      <button id="changeEtabBtn" class="btn">Changer</button>
+    </div>
+    <div class="muted" style="margin-top:8px">Isole toutes les données de vos courses, élèves et classements.</div>
+  </div>
+
+  <div class="card">
+    <h2><svg><use href="#i-tv"/></svg> Accès & Partage d'écran</h2>
+    <div class="access-grid">
+      <div class="access-box">
+        <div>
+          <h4><svg class="icon"><use href="#i-chrono"/></svg> Chrono / Arrivée</h4>
+          <p>Poste de chronométrage et de scan.</p>
+        </div>
+        <div class="access-actions">
+          <button id="copyAdminBtn" class="btn ghost grow">📋 Copier le lien</button>
+        </div>
+      </div>
+
+      <div class="access-box">
+        <div>
+          <h4><svg class="icon"><use href="#i-tv"/></svg> Grand Écran Direct</h4>
+          <p>Affichage en direct avec défilement des 10 derniers coureurs.</p>
+        </div>
+        <div class="access-actions">
+          <button id="openScreenBtn" class="btn green grow">📺 Ouvrir</button>
+          <button id="copyScreenBtn" class="btn ghost grow">📋 Copier</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><svg><use href="#i-bib"/></svg> 1. Importer la liste des élèves</h2>
+    <div class="muted" style="margin-bottom:12px">Format : <b>Dossard;Nom;Prenom;Sexe;Classe</b> (ou Division / Niveau)[cite: 1].</div>
+    <div class="importbox">
+      <input id="csvFile" class="file" type="file" accept=".csv,text/csv,text/plain">
+      <button id="importBtn" class="btn">Choisir un fichier CSV</button>
+      <div id="importInfo" class="muted" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><svg><use href="#i-print"/></svg> 2. Impression des Dossards avec QR Code</h2>
+    <div class="muted" style="margin-bottom:12px">Sélectionnez la densité d'impression par page A4 :</div>
+    
+    <div class="row">
+      <label for="bibsPerPageSelect" style="font-weight:700;font-size:0.9rem">Disposition :</label>
+      <select id="bibsPerPageSelect" style="font-weight:800;color:var(--cyan)">
+        <option value="8">8 par page (Grands dossards - 2×4)</option>
+        <option value="10" selected>10 par page (Standard - 2×5)</option>
+        <option value="16">16 par page (Compactes / badges - 4×4)</option>
+        <option value="24">24 par page (Planches d'autocollants - 4×6)</option>
+      </select>
+      <button id="printBibsBtn" class="btn yellow">
+        <svg class="icon"><use href="#i-print"/></svg> Imprimer les dossards
+      </button>
+    </div>
+  </div>
+</section>
+
+<section id="diagTab" class="tab">
+  <div class="card">
+    <h2><svg><use href="#i-flag"/></svg> Diagnostic de connexion</h2>
+    <div class="diag">
+      <div id="d1">⏳ SDK Firebase…</div><div id="d2">⏳ Initialisation…</div>
+      <div id="d3">⏳ Firestore…</div><div id="d4">⏳ Écriture test…</div><div id="d5">⏳ Lecture test…</div>
+    </div>
+    <p id="diagError" class="errtxt"></p>
+    <button id="diagBtn" class="btn ghost">↻ Relancer le test</button>
+  </div>
+</section>
+</main>
+
+<!-- ======================================================== -->
+<!-- ÉCRAN EN DIRECT (10 COUREURS EN DÉFILEMENT)              -->
+<!-- ======================================================== -->
+<section id="screenPage" class="screenPage">
+  <div class="screen">
+    <div class="screen-header-tag">
+      <svg><use href="#i-runner"/></svg> CROSS EPS <span id="screenEtabDisplay" class="etab-badge"></span>
+    </div>
+    <h1 id="screenRaceTitle">Course 1</h1>
+    <div class="sub">
+      <svg class="icon"><use href="#i-chrono"/></svg> 
+      10 DERNIÈRES ARRIVÉES EN DIRECT · TOTAL : <span id="screenCount">0</span>
+    </div>
+    <div id="liveList" class="live"></div>
+  </div>
+</section>
+
+<div id="printSection"></div>
+
+<script>
+const firebaseConfig={apiKey:"AIzaSyAh1Rf4u6iAdS81yX8yEgJ37vJAd9gOvI",authDomain:"cross-75701.firebaseapp.com",projectId:"cross-75701",storageBucket:"cross-75701.firebasestorage.app",messagingSenderId:"415446500180",appId:"1:415446500180:web:316da849eec78abb9afec1"};
+
+const urlParams = new URLSearchParams(location.search);
+let currentEtab = (urlParams.get("etab") || "defaut").toLowerCase().replace(/[^a-z0-9_-]/g, "");
+if (!currentEtab) currentEtab = "defaut";
+
+let db=null, courseId=null, courseData={}, results=[], students=[], scanner=null, scanning=false, timer=null, localStart=0;
+let lastScanTime=0, lastScanBib="";
+
+const $=id=>document.getElementById(id);
+const fmt=ms=>{ms=Math.max(0,Number(ms)||0);return String(Math.floor(ms/60000)).padStart(2,"0")+":"+String(Math.floor(ms%60000/1000)).padStart(2,"0")+"."+Math.floor(ms%1000/100)};
+function setStatus(t,c=""){ if($("firebaseStatus")){ $("firebaseStatus").textContent=t;$("firebaseStatus").className="status "+c; } }
+function diag(id,t,c){if($(id)){$(id).textContent=t;$(id).className=c||""}}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+
+function getEtabDoc(){ return db.collection("etablissements").doc(currentEtab); }
+function getActiveCourseRef(){ return getEtabDoc().collection("config").doc("active"); }
+function getCourseRef(id){ return getEtabDoc().collection("courses").doc(id || courseId); }
+
+function updateEtabUI(){
+  if($("currentEtabDisplay")) $("currentEtabDisplay").textContent = currentEtab;
+  if($("screenEtabDisplay")) $("screenEtabDisplay").textContent = currentEtab;
+  if($("etabInput")) $("etabInput").value = currentEtab;
+}
+
+const getAdminUrl = () => `${location.origin}${location.pathname}?etab=${currentEtab}`;
+const getScreenUrl = () => `${location.origin}${location.pathname}?etab=${currentEtab}&mode=screen`;
+
+if($("copyAdminBtn")) $("copyAdminBtn").onclick = () => {
+  navigator.clipboard.writeText(getAdminUrl());
+  $("copyAdminBtn").textContent = "✅ Copié !";
+  setTimeout(() => $("copyAdminBtn").textContent = "📋 Copier le lien", 2000);
+};
+
+if($("openScreenBtn")) $("openScreenBtn").onclick = () => window.open(getScreenUrl(), "_blank");
+
+if($("copyScreenBtn")) $("copyScreenBtn").onclick = () => {
+  navigator.clipboard.writeText(getScreenUrl());
+  $("copyScreenBtn").textContent = "✅ Copié !";
+  setTimeout(() => $("copyScreenBtn").textContent = "📋 Copier", 2000);
+};
+
+if($("changeEtabBtn")) $("changeEtabBtn").onclick = () => {
+  const next = $("etabInput").value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+  if(next && next !== currentEtab){
+    location.search = `?etab=${encodeURIComponent(next)}`;
+  }
+};
+
+async function init(){
+  updateEtabUI();
+  try{
+    diag("d1","⏳ SDK Firebase…","waittxt");
+    if(!window.firebase) throw new Error("SDK Firebase absent");
+    diag("d1","✅ SDK Firebase chargé","oktxt");
+    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    diag("d2","✅ Firebase initialisé","oktxt");
+    db = firebase.firestore();
+    diag("d3","⏳ Firestore…","waittxt");
+    await db.collection("cross_diagnostic").doc("connection").set({ok:true,at:firebase.firestore.FieldValue.serverTimestamp()});
+    diag("d4","✅ Écriture Firestore OK","oktxt");
+    const snap = await db.collection("cross_diagnostic").doc("connection").get({source:"server"});
+    diag("d3","✅ Firestore connecté","oktxt");
+    diag("d5",snap.exists?"✅ Lecture Firestore OK":"⚠️ Sans doc","oktxt");
+    setStatus("● Connecté : " + currentEtab,"ok");
+    await ensureActiveCourse();
+    listenActiveCourse();
+  }catch(e){
+    console.error(e);
+    setStatus("● Erreur Firebase","err");
+    diag("d3","❌ "+(e.code||"Firestore"),"errtxt");
+    if($("diagError")) $("diagError").textContent=e.message;
+  }
+}
+
+async function ensureActiveCourse(){
+  const ref = getActiveCourseRef(), snap = await ref.get();
+  if(snap.exists && snap.data().courseId){
+    courseId = snap.data().courseId;
+  } else {
+    courseId = "course_" + Date.now();
+    await ref.set({courseId, title:"Course 1", updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  }
+  await loadCourseMeta();
+}
+
+async function loadCourseMeta(){
+  const s = await getCourseRef(courseId).get();
+  if(!s.exists){
+    await getCourseRef(courseId).set({title:"Course 1", createdAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  }
+}
+
+let unsubResults=null, unsubStudents=null, unsubMeta=null;
+function listenActiveCourse(){
+  getActiveCourseRef().onSnapshot(async s => {
+    const id = s.data()?.courseId;
+    if(!id) return;
+    if(id !== courseId){
+      courseId = id;
+      await loadCourseMeta();
+    }
+    listenCourse();
+  });
+}
+
+function listenCourse(){
+  if(unsubResults) unsubResults();
+  if(unsubStudents) unsubStudents();
+  if(unsubMeta) unsubMeta();
+
+  const ref = getCourseRef(courseId);
+
+  unsubMeta = ref.onSnapshot(s => {
+    courseData = s.data() || {};
+    if($("raceTitle")) $("raceTitle").value = courseData.title || "Course 1";
+    if($("screenRaceTitle")) $("screenRaceTitle").textContent = courseData.title || "Course 1";
+    updateTimerState();
+  });
+
+  unsubStudents = ref.collection("students").onSnapshot(s => {
+    students = s.docs.map(d => ({id:d.id, ...d.data()}));
+  });
+
+  unsubResults = ref.collection("results").onSnapshot(s => {
+    results = s.docs.map(d => ({id:d.id, ...d.data()}));
+    results.sort((a,b)=>(Number(a.timeMs)||0)-(Number(b.timeMs)||0));
+    try{ renderResults(); }catch(e){}
+    try{ renderLive(); }catch(e){}
+  });
+}
+
+function updateTimerState(){
+  const st = Number(courseData.startAtMs)||0;
+  if(st>0){
+    localStart=st;
+    if(!courseData.finished){
+      startLocalTicker();
+      if($("raceState")) $("raceState").textContent="COURSE EN COURS";
+    } else {
+      if($("raceState")) $("raceState").textContent="COURSE CLÔTURÉE";
+    }
+  } else {
+    if($("raceState")) $("raceState").textContent="EN ATTENTE DU DÉPART";
+    if($("chrono")) $("chrono").textContent="00:00.0";
+  }
+}
+
+function startLocalTicker(){
+  clearInterval(timer);
+  timer=setInterval(()=>{if($("chrono")) $("chrono").textContent=fmt(Date.now()-localStart)},50);
+}
+
+if($("startBtn")) $("startBtn").onclick=async()=>{
+  const now=Date.now();
+  await getCourseRef(courseId).set({startAtMs:now,finished:false},{merge:true});
+  localStart=now;
+  startLocalTicker();
+};
+
+if($("stopBtn")) $("stopBtn").onclick=async()=>{
+  clearInterval(timer);
+  await getCourseRef(courseId).set({finished:true},{merge:true});
+  if($("raceState")) $("raceState").textContent="COURSE CLÔTURÉE";
+};
+
+if($("resetBtn")) $("resetBtn").onclick=async()=>{
+  if(!confirm("Réinitialiser le chrono de cette course ?")) return;
+  clearInterval(timer);
+  await getCourseRef(courseId).set({startAtMs:0,finished:false},{merge:true});
+  if($("chrono")) $("chrono").textContent="00:00.0";
+  if($("raceState")) $("raceState").textContent="EN ATTENTE DU DÉPART";
+};
+
+if($("raceTitle")) $("raceTitle").onchange=()=>getCourseRef(courseId).set({title:$("raceTitle").value||"Course"},{merge:true});
+
+if($("newRaceBtn")) $("newRaceBtn").onclick=async()=>{
+  if(!confirm("Créer une nouvelle course pour cet établissement ?")) return;
+  const id="course_"+Date.now();
+  await getCourseRef(id).set({title:"Course "+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),startAtMs:0,finished:false,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await getActiveCourseRef().set({courseId:id,title:"Course",updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  courseId=id;
+  listenCourse();
+};
+
+async function recordArrival(raw){
+  let bib = String(raw??"").trim().replace(/[^\d]/g,"");
+  if(!bib) return;
+
+  const now = Date.now();
+  if(bib === lastScanBib && (now - lastScanTime) < 2000) return;
+  lastScanBib = bib;
+  lastScanTime = now;
+
+  const ref = getCourseRef(courseId);
+  const resRef = ref.collection("results").doc("dossard_"+bib);
+  const st = students.find(s=>String(s.dossard)===bib);
+
+  const start = Number(courseData.startAtMs)||0;
+  const timeMs = start > 0 ? Math.max(0, now - start) : 0;
+
+  try{
+    let dup = false;
+    await db.runTransaction(async tx=>{
+      const old = await tx.get(resRef);
+      if(old.exists){ dup=true; return; }
+      tx.set(resRef,{
+        dossard: bib,
+        nom: st?.nom||"",
+        prenom: st?.prenom||"",
+        classe: st?.classe||st?.division||"",
+        sexe: (st?.sexe||"").toUpperCase().trim(),
+        timeMs,
+        scannedAtMs: now,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    });
+
+    showLast(bib, st, timeMs, dup);
+  }catch(e){
+    console.warn("Scan err:", e.message);
+  }
+  if($("manualBib")) $("manualBib").value="";
+}
+
+function showLast(bib,st,time,dup){
+  if(!$("lastScan")) return;
+  $("lastScan").className = "last show" + (dup ? " duplicate" : "");
+  const nom = st ? `${st.nom} ${st.prenom}` : `Dossard #${bib}`;
+  const cls = st?.classe || st?.division || "";
+  if(dup){
+    $("lastScan").innerHTML = `⚠️ <b>#${esc(bib)} ${esc(nom)}</b> est déjà enregistré !`;
+  } else {
+    $("lastScan").innerHTML = `🏁 <b>#${esc(bib)} ${esc(nom)}</b> (${esc(cls)}) franchit la ligne à <b>${fmt(time)}</b>`;
+  }
+}
+
+if($("manualBtn")) $("manualBtn").onclick=()=>recordArrival($("manualBib").value);
+if($("manualBib")) $("manualBib").onkeydown=e=>{if(e.key==="Enter")recordArrival(e.target.value)};
+if($("backBtn")) $("backBtn").onclick=()=>{$("manualBib").value=$("manualBib").value.slice(0,-1);$("manualBib").focus()};
+
+document.querySelectorAll(".pad button").forEach(b=>b.onclick=()=>{
+  const k=b.dataset.key;
+  if(k==="C")$("manualBib").value="";
+  else if(k==="OK")recordArrival($("manualBib").value);
+  else $("manualBib").value+=k;
+  $("manualBib").focus();
+});
+
+async function cameras(){
+  try{
+    const cams=await Html5Qrcode.getCameras();
+    if($("cameraSelect")) $("cameraSelect").innerHTML="";
+    cams.forEach((c,i)=>{
+      const o=document.createElement("option");
+      o.value=c.id;
+      o.textContent=c.label||"Caméra "+(i+1);
+      if($("cameraSelect")) $("cameraSelect").appendChild(o);
+    });
+  }catch(e){
+    if($("cameraSelect")) $("cameraSelect").innerHTML="<option>Caméra indisponible</option>";
+  }
+}
+
+if($("cameraBtn")) $("cameraBtn").onclick=async()=>{
+  if(scanning){
+    try{await scanner.stop()}catch(e){}
+    scanning=false;
+    $("cameraBtn").innerHTML='<svg class="icon"><use href="#i-camera"/></svg> Activer Caméra';
+    return;
+  }
+  try{
+    scanner=scanner||new Html5Qrcode("reader");
+    await scanner.start($("cameraSelect").value,{fps:20,qrbox:{width:260,height:180}},txt=>recordArrival(txt),()=>{});
+    scanning=true;
+    $("cameraBtn").textContent="⏹ Arrêter Caméra";
+  }catch(e){
+    alert("Impossible d'ouvrir la caméra : "+e.message);
+  }
+};
+
+function renderResults(){
+  if(!$("resultsBody")) return;
+  const q=$("filterText").value.toLowerCase().trim();
+  let a=results.filter(r=>(r.nom+" "+r.prenom+" "+r.classe+" "+r.dossard).toLowerCase().includes(q));
+  if($("resultCount")) $("resultCount").textContent=results.length+" arrivée(s) enregistrée(s)";
+  $("resultsBody").innerHTML=a.map((r,i)=>`
+    <tr>
+      <td><span class="rank-badge ${i===0?'r1':(i===1?'r2':(i===2?'r3':''))}">${i+1}</span></td>
+      <td><b>${esc(r.nom||"—")}</b> ${esc(r.prenom||"")}</td>
+      <td>${esc(r.sexe||"—")}</td>
+      <td>${esc(r.classe||"—")}</td>
+      <td><b>${esc(r.dossard)}</b></td>
+      <td><b>${fmt(r.timeMs)}</b></td>
+    </tr>
+  `).join("")||"<tr><td colspan=6 style='text-align:center;color:#94a3b8;padding:36px'>Aucune arrivée pour le moment</td></tr>";
+}
+
+/* ======================================================== */
+/* RENDU EN DIRECT : 10 DERNIERS COUREURS + PODIUMS         */
+/* ======================================================== */
+function renderLive(){
+  if(!$("liveList")) return;
+  if($("screenCount")) $("screenCount").textContent=results.length;
+
+  if(!results.length){
+    $("liveList").innerHTML="<div class='empty'>🏁<br><br>En attente des premiers coureurs sur la ligne…</div>";
+    return;
+  }
+
+  // Affiche désormais les 10 dernières arrivées
+  const derniers=[...results].sort((x,y)=>(Number(y.scannedAtMs)||0)-(Number(x.scannedAtMs)||0)).slice(0, 10);
+
+  $("liveList").innerHTML=derniers.map(r=>{
+    const rang=results.findIndex(x=>String(x.dossard)===String(r.dossard))+1;
+    const s=String(r.sexe||"").toUpperCase().trim();
+    const isFille=s==="F"||s==="FILLE";
+    const isGarcon=s==="M"||s==="G"||s==="GARCON";
+    const clr=isFille?"fille":(isGarcon?"garcon":"");
+    const tag=isFille?`<span class="liveGenderTag"><svg class="icon"><use href="#i-runner"/></svg> Fille</span>`:(isGarcon?`<span class="liveGenderTag"><svg class="icon"><use href="#i-runner"/></svg> Garçon</span>`:"");
+    const nom=((r.nom||"")+" "+(r.prenom||"")).trim()||("Dossard #"+r.dossard);
+    const cls=r.classe?`<span class="badge">Classe : <b>${esc(r.classe)}</b></span>`:"";
+
+    // Médaille podium pour les 3 premiers
+    let medalSvg = "";
+    if (rang === 1) medalSvg = '<svg class="medal-icon" style="fill:#facc15"><use href="#i-medal"/></svg>';
+    else if (rang === 2) medalSvg = '<svg class="medal-icon" style="fill:#e2e8f0"><use href="#i-medal"/></svg>';
+    else if (rang === 3) medalSvg = '<svg class="medal-icon" style="fill:#f97316"><use href="#i-medal"/></svg>';
+
+    return `
+      <div class="liveitem ${clr}">
+        <div class="liveRank-wrap">
+          <div class="liveRank">${medalSvg} #${rang}</div>
+        </div>
+        <div>
+          <div class="liveName">${esc(nom)}</div>
+          <div class="liveMeta">
+            <span class="badge">
+              <svg><use href="#i-bib"/></svg> Dossard <b>${esc(r.dossard)}</b>
+            </span>
+            ${cls}
+            ${tag}
+          </div>
+        </div>
+        <div class="liveTime">
+          <svg><use href="#i-chrono"/></svg>
+          ${fmt(r.timeMs)}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+if($("filterText")) $("filterText").oninput=renderResults;
+
+if($("exportBtn")) $("exportBtn").onclick=()=>{
+  const rows=[["Classement","Nom","Prénom","Sexe","Classe","Dossard","Temps"],...results.map((r,i)=>[i+1,r.nom||"",r.prenom||"",r.sexe||"",r.classe||"",r.dossard,fmt(r.timeMs)])];
+  const csv="\uFEFF"+rows.map(r=>r.map(x=>`"${String(x).replaceAll('"','""')}"`).join(";")).join("\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download=`classement_${currentEtab}_${courseId}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+function splitCSV(l,sep){let out=[],cur="",q=false;for(let i=0;i<l.length;i++){let c=l[i];if(c==='"'&&l[i+1]==='"'){cur+='"';i++;continue}if(c==='"'){q=!q;continue}if(c===sep&&!q){out.push(cur.trim());cur=""}else cur+=c}out.push(cur.trim());return out}
+function parseCSV(t){
+  t=t.replace(/^\uFEFF/,"").replace(/\r/g,"");
+  const lines=t.split("\n").filter(x=>x.trim());
+  if(!lines.length)return[];
+  const sep=(lines[0].match(/;/g)||[]).length>=(lines[0].match(/,/g)||[]).length?";":",";
+  const h=splitCSV(lines[0],sep).map(x=>x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""));
+  const idx=arr=>{for(const n of arr){const i=h.findIndex(x=>x.includes(n));if(i>=0)return i}return -1};
+  const D=idx(["dossard","num"]),N=idx(["nom"]),P=idx(["prenom"]),C=idx(["classe","division","groupe","niveau"]),S=idx(["sexe","genre"]);
+  return lines.slice(1).map(l=>{
+    const a=splitCSV(l,sep),v=i=>i>=0?(a[i]||"").trim():"";
+    return{dossard:v(D),nom:v(N),prenom:v(P),classe:v(C),sexe:v(S).toUpperCase()};
+  }).filter(x=>x.dossard);
+}
+
+if($("importBtn")) $("importBtn").onclick=()=>$("csvFile").click();
+if($("csvFile")) $("csvFile").onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  $("importInfo").textContent="Importation en cours…";
+  try{
+    const rows=parseCSV(await f.text());
+    if(!rows.length) throw new Error("Aucun élève trouvé.");
+    const col=getCourseRef(courseId).collection("students");
+    for(let i=0;i<rows.length;i+=400){
+      const b=db.batch();
+      rows.slice(i,i+400).forEach(s=>b.set(col.doc("dossard_"+s.dossard),s,{merge:true}));
+      await b.commit();
+    }
+    $("importInfo").textContent=`✅ ${rows.length} coureurs enregistrés avec succès.`;
+    e.target.value="";
+  }catch(err){
+    $("importInfo").textContent="❌ "+err.message;
+  }
+};
+
+/* ======================================================== */
+/* MOTEUR D'IMPRESSION DYNAMIQUE (8, 10, 16, 24 DOSSARDS)   */
+/* ======================================================== */
+$("printBibsBtn").onclick = () => {
+  if (!students || students.length === 0) {
+    alert("Veuillez d'abord importer un fichier CSV avec les élèves.");
+    return;
+  }
+
+  const perPage = parseInt($("bibsPerPageSelect").value, 10) || 10;
+  const sorted = [...students].sort((a, b) => Number(a.dossard) - Number(b.dossard));
+  const printSection = $("printSection");
+  printSection.innerHTML = "";
+
+  const qrPixelSize = (perPage >= 16) ? 58 : 84;
+
+  for (let i = 0; i < sorted.length; i += perPage) {
+    const page = document.createElement("div");
+    page.className = `bib-page layout-${perPage}`;
+
+    const slice = sorted.slice(i, i + perPage);
+    slice.forEach(student => {
+      page.appendChild(createBibCard(student, qrPixelSize));
+    });
+
+    printSection.appendChild(page);
+  }
+
+  setTimeout(() => {
+    window.print();
+  }, 400);
+};
+
+function createBibCard(student, qrSize) {
+  const card = document.createElement("div");
+  card.className = "bib-card";
+
+  const sexe = student.sexe === "F" ? "F" : (student.sexe === "M" ? "G" : "");
+  const qrId = "qr_" + student.dossard + "_" + Math.random().toString(36).substr(2, 5);
+  const classeNom = student.classe || student.division || student.niveau || "—";
+
+  card.innerHTML = `
+    <div class="bib-top">
+      <span class="school-title">${esc(currentEtab.toUpperCase())}</span>
+      <span class="gender-tag">${esc(sexe)}</span>
+    </div>
+    <div class="bib-center">
+      <div class="bib-number-wrap">
+        <div class="bib-number">${esc(student.dossard)}</div>
+      </div>
+      <div id="${qrId}" class="bib-qr"></div>
+    </div>
+    <div class="bib-bottom">
+      <div class="bib-name">${esc(student.nom)} ${esc(student.prenom)}</div>
+      <div class="bib-class">${esc(classeNom)}</div>
+    </div>
+  `;
+
+  setTimeout(() => {
+    const container = card.querySelector("#" + qrId);
+    if (container) {
+      new QRCode(container, {
+        text: String(student.dossard),
+        width: qrSize,
+        height: qrSize,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+  }, 0);
+
+  return card;
+}
+
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  $(b.dataset.tab).classList.add("active");
+});
+
+function enterScreen(){
+  if($("appHeader")) $("appHeader").classList.add("hidden");
+  if($("mainNav")) $("mainNav").classList.add("hidden");
+  if($("normalApp")) $("normalApp").classList.add("hidden");
+  $("screenPage").classList.add("active");
+  document.body.style.background="#050912";
+}
+
+if(urlParams.get("mode")==="screen") enterScreen();
+cameras();
+init();
+</script>
+</body>
+</html>
