@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#1e3a8a">
+<title>Cross Scolaire EPS — Stade & Chrono</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Oswald:wght@500;600;700&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root {
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --border: #cbd5e1;
+  --text: #0f172a;
+  --muted: #64748b;
+  
+  --navy: #1e3a8a;
+  --navy-dark: #0f204b;
+  --track: #b91c1c;
+  --track-light: #fef2f2;
+  --green: #15803d;
+  --green-bg: #ecfdf5;
+  --yellow: #b45309;
+  --yellow-bg: #fefce8;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  min-height: 100%;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select { font: inherit; }
+button { touch-action: manipulation; cursor: pointer; transition: all 0.15s ease; }
+.hidden { display: none !important; }
+
+/* HEADER OFFICIEL */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--navy);
+  color: #fff;
+  border-bottom: 3px solid var(--track);
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+.brand {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-flag {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  background: #fff;
+  color: var(--navy);
+  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+.etab-badge {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.status {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+.status.ok { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+.status.err { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+
+/* NAVIGATION */
+nav {
+  display: flex;
+  gap: 4px;
+  background: #e2e8f0;
+  border-bottom: 1px solid var(--border);
+  padding: 6px 12px;
+  position: sticky;
+  top: 57px;
+  z-index: 49;
+}
+nav button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 9px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.92rem;
+}
+nav button:hover { color: var(--navy); background: rgba(255, 255, 255, 0.6); }
+nav button.active {
+  background: var(--surface);
+  color: var(--navy);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border-bottom: 2px solid var(--track);
+}
+
+/* CARDS */
+main { max-width: 960px; margin: auto; padding: 14px; }
+.tab { display: none; }
+.tab.active { display: block; animation: fadeIn 0.2s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+h2 {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 12px;
+  color: var(--navy);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.muted { color: var(--muted); font-size: 0.85rem; line-height: 1.4; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.grow { flex: 1; }
+
+input, select {
+  background: #fff;
+  color: var(--text);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  min-width: 0;
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.12);
+}
+
+.btn {
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: var(--navy);
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn:hover { background: var(--navy-dark); transform: translateY(-1px); }
+.btn.green { background: #15803d; }
+.btn.green:hover { background: #166534; }
+.btn.red { background: var(--track); }
+.btn.red:hover { background: #991b1b; }
+.btn.ghost { background: #fff; border: 1.5px solid var(--border); color: var(--text); }
+.btn.ghost:hover { background: #f8fafc; border-color: var(--navy); }
+.btn.yellow { background: var(--yellow); }
+
+/* CHRONOMÈTRE DU STADE */
+.chrono {
+  background: #0f172a;
+  border: 4px solid #334155;
+  border-radius: var(--radius-md);
+  text-align: center;
+  padding: 20px 14px;
+  margin: 14px 0;
+  box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.8);
+}
+.digits {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(3.2rem, 13vw, 5.2rem);
+  line-height: 1;
+  font-weight: 800;
+  color: #fbbf24;
+  text-shadow: 0 0 16px rgba(251, 191, 36, 0.35);
+  font-variant-numeric: tabular-nums;
+}
+.state {
+  margin-top: 8px;
+  color: #94a3b8;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* NIVEAUX SCOLAIRES */
+.levels { display: flex; gap: 6px; flex-wrap: wrap; }
+.level {
+  border: 1.5px solid var(--border);
+  background: #f8fafc;
+  border-radius: 999px;
+  padding: 6px 12px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.level:has(input:checked) {
+  border-color: var(--navy);
+  background: #eff6ff;
+  color: var(--navy);
+}
+.level input { accent-color: var(--navy); }
+
+/* SCANNER & CAMERA */
+#reader {
+  background: #000;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  min-height: 190px;
+  margin-top: 10px;
+  border: 2px solid var(--border);
+}
+.scanline { font-size: 0.82rem; color: var(--muted); margin: 8px 0; }
+.manual {
+  font-family: 'Oswald', sans-serif;
+  font-size: 2rem;
+  text-align: center;
+  font-weight: 700;
+  flex: 1;
+  min-width: 140px;
+}
+.pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+.pad button {
+  padding: 12px;
+  border: 1.5px solid var(--border);
+  background: #f8fafc;
+  color: var(--navy);
+  border-radius: var(--radius-sm);
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+.pad button:active { background: #e2e8f0; }
+
+.last {
+  display: none;
+  margin-top: 12px;
+  border: 2px solid var(--green);
+  background: var(--green-bg);
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  color: #14532d;
+  font-size: 0.95rem;
+}
+.last.show { display: block; animation: pop 0.2s ease-out; }
+.last.duplicate { border-color: var(--track); background: var(--track-light); color: #7f1d1d; }
+@keyframes pop { from { transform: scale(0.98); } to { transform: scale(1); } }
+
+/* TABLEAU DES ARRIVÉES */
+.tablewrap {
+  overflow: auto;
+  max-height: 500px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+th, td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-align: left; white-space: nowrap; }
+th {
+  position: sticky; top: 0;
+  background: #f8fafc;
+  color: var(--navy);
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.rank-badge {
+  display: inline-flex; width: 28px; height: 28px;
+  align-items: center; justify-content: center;
+  border-radius: 4px; background: #e2e8f0; font-weight: 800;
+  font-family: 'Oswald', sans-serif; font-size: 0.95rem;
+}
+.r1 { background: #fef08a; color: #854d0e; border: 1px solid #facc15; }
+.r2 { background: #e2e8f0; color: #334155; border: 1px solid #94a3b8; }
+.r3 { background: #fed7aa; color: #9a3412; border: 1px solid #fb923c; }
+
+.access-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
+.access-box {
+  background: #f8fafc; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: 14px; display: flex; flex-direction: column; justify-content: space-between;
+}
+.access-box h4 { margin: 0 0 4px; font-family: 'Oswald', sans-serif; font-size: 1.05rem; color: var(--navy); }
+.access-box p { margin: 0 0 10px; font-size: 0.82rem; color: var(--muted); }
+.access-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.importbox { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 16px; text-align: center; }
+.file { display: none; }
+.diag { display: grid; gap: 6px; }
+.diag div { padding: 9px; border-radius: var(--radius-sm); background: #f8fafc; border: 1px solid var(--border); font-size: 0.85rem; font-family: monospace; }
+.oktxt { color: var(--green); font-weight: 700; }
+.errtxt { color: var(--track); font-weight: 700; }
+.waittxt { color: var(--yellow); }
+
+/* ======================================================== */
+/* ÉCRAN EN DIRECT STADE (10 COUREURS EN DÉFILEMENT)       */
+/* ======================================================== */
+.screenPage { display: none; }
+.screenPage.active { display: block; }
+.screen {
+  min-height: 100vh;
+  padding: 20px 14px;
+  background: #0f172a;
+  color: #fff;
+  text-align: center;
+}
+.screen-header-tag {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.screen h1 {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(2.2rem, 6vw, 4.2rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 4px 0 6px;
+  color: #fff;
+}
+.screen .sub {
+  color: #38bdf8;
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.15rem;
+  letter-spacing: 1.5px;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+.live { max-width: 1050px; margin: auto; text-align: left; }
+
+.liveitem {
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  background: #1e293b;
+  border-left: 8px solid #64748b;
+  border-radius: 8px;
+  padding: 12px 18px;
+  margin: 9px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Fille : Ruban jaune ambre athlète */
+.liveitem.fille {
+  border-left-color: #fbbf24;
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.15) 0%, #1e293b 40%);
+}
+.liveitem.fille .liveRank { color: #fde047; }
+.liveitem.fille .liveGenderTag { background: #854d0e; color: #fef08a; }
+
+/* Garçon : Ruban vert stade */
+.liveitem.garcon {
+  border-left-color: #34d399;
+  background: linear-gradient(90deg, rgba(52, 211, 153, 0.15) 0%, #1e293b 40%);
+}
+.liveitem.garcon .liveRank { color: #6ee7b7; }
+.liveitem.garcon .liveGenderTag { background: #065f46; color: #a7f3d0; }
+
+.liveRank {
+  font-family: 'Oswald', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  text-align: center;
+  color: #e2e8f0;
+}
+.liveName {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(1.3rem, 3.8vw, 2.3rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.1;
+  color: #fff;
+}
+.liveMeta {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 4px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.liveMeta .badge {
+  background: #334155;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #fff;
+}
+.liveGenderTag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+}
+.liveTime {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(1.4rem, 4.2vw, 2.5rem);
+  font-weight: 800;
+  color: #fbbf24;
+  font-variant-numeric: tabular-nums;
+}
+.empty { padding: 90px 20px; color: #64748b; text-align: center; font-size: 1.25rem; font-family: 'Oswald', sans-serif; text-transform: uppercase; }
+
+/* ======================================================== */
+/* FEUILLE D'IMPRESSION DES DOSSARDS                        */
+/* ======================================================== */
+#printSection { display: none; }
+
+@media print {
+  @page { size: A4 portrait; margin: 6mm; }
+  body { background: #fff !important; color: #000 !important; }
+  header, nav, main, #screenPage { display: none !important; }
+  #printSection { display: block !important; }
+
+  .bib-page {
+    page-break-after: always;
+    height: 284mm;
+    max-height: 284mm;
+    display: grid;
+    box-sizing: border-box;
+    gap: 3mm;
+  }
+
+  .bib-page.layout-8 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(4, 1fr); }
+  .bib-page.layout-10 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(5, 1fr); }
+  .bib-page.layout-16 { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); }
+  .bib-page.layout-24 { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(6, 1fr); }
+
+  .bib-card {
+    border: 1.5px dashed #475569;
+    border-radius: 6px;
+    padding: 3mm 4mm;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #fff;
+    color: #000;
+    overflow: hidden;
+  }
+  .bib-top {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid #cbd5e1; padding-bottom: 1.5mm;
+  }
+  .bib-top .school-title { font-family: 'Oswald', sans-serif; font-weight: 700; text-transform: uppercase; }
+  .bib-top .gender-tag { font-weight: 800; font-family: 'Oswald', sans-serif; }
+
+  .bib-center {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 2mm; margin: auto 0;
+  }
+  .bib-number {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+  .bib-qr {
+    background: #fff; border: 1px solid #000; border-radius: 4px;
+    padding: 1mm; display: flex; align-items: center; justify-content: center;
+  }
+  .bib-qr img { width: 100% !important; height: 100% !important; }
+
+  .bib-bottom {
+    border-top: 1px solid #cbd5e1; padding-top: 1.5mm;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .bib-name { font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65%; text-transform: uppercase; }
+  .bib-class { font-weight: 700; text-align: right; }
+
+  .layout-8 .school-title { font-size: 8pt; }
+  .layout-8 .gender-tag { font-size: 8pt; }
+  .layout-8 .bib-number { font-size: 44pt; }
+  .layout-8 .bib-name { font-size: 11pt; }
+  .layout-8 .bib-class { font-size: 10pt; }
+  .layout-8 .bib-qr { width: 23mm; height: 23mm; }
+
+  .layout-10 .school-title { font-size: 7.5pt; }
+  .layout-10 .gender-tag { font-size: 7.5pt; }
+  .layout-10 .bib-number { font-size: 34pt; }
+  .layout-10 .bib-name { font-size: 9.5pt; }
+  .layout-10 .bib-class { font-size: 9pt; }
+  .layout-10 .bib-qr { width: 20mm; height: 20mm; }
+
+  .layout-16 .school-title { font-size: 6pt; }
+  .layout-16 .gender-tag { font-size: 6pt; }
+  .layout-16 .bib-number { font-size: 26pt; }
+  .layout-16 .bib-name { font-size: 7.5pt; }
+  .layout-16 .bib-class { font-size: 7pt; }
+  .layout-16 .bib-qr { width: 15mm; height: 15mm; }
+
+  .layout-24 .school-title { font-size: 5pt; }
+  .layout-24 .gender-tag { font-size: 5.5pt; }
+  .layout-24 .bib-number { font-size: 20pt; }
+  .layout-24 .bib-name { font-size: 6.5pt; }
+  .layout-24 .bib-class { font-size: 6pt; }
+  .layout-24 .bib-qr { width: 13mm; height: 13mm; }
+}
+
+@media(max-width: 580px) {
+  .access-grid { grid-template-columns: 1fr; }
+  .liveitem { grid-template-columns: 50px 1fr; gap: 8px; padding: 10px; }
+  .liveRank { font-size: 1.6rem; }
+  .liveTime { grid-column: 2; text-align: right; }
+  .digits { font-size: 3.4rem; }
+}
+</style>
+</head>
+<body>
+
+<header id="appHeader">
+  <div class="brand">
+    <div class="brand-flag">🏁</div>
+    Cross Scolaire EPS
+    <span id="currentEtabDisplay" class="etab-badge"></span>
+  </div>
+  <div id="firebaseStatus" class="status">Connexion…</div>
+</header>
+
+<nav id="mainNav">
+  <button class="active" data-tab="liveTab">⏱️ Arrivées</button>
+  <button data-tab="resultsTab">🏆 Classement</button>
+  <button data-tab="configTab">🏫 Établissement</button>
+  <button data-tab="diagTab">🔧 Test</button>
+</nav>
+
+<main id="normalApp">
+<section id="liveTab" class="tab active">
+  <div class="card">
+    <div class="row">
+      <input id="raceTitle" class="grow" value="Course 1" style="font-family:'Oswald',sans-serif;font-size:1.1rem;font-weight:600">
+      <button class="btn ghost" id="newRaceBtn">＋ Nouvelle course</button>
+    </div>
+    <div class="levels" style="margin-top:10px">
+      <label class="level"><input type="checkbox" value="CM2"> CM2</label>
+      <label class="level"><input type="checkbox" value="6E" checked> 6èmes</label>
+      <label class="level"><input type="checkbox" value="5E"> 5èmes</label>
+      <label class="level"><input type="checkbox" value="4E"> 4èmes</label>
+      <label class="level"><input type="checkbox" value="3E"> 3èmes</label>
+    </div>
+    
+    <div class="chrono">
+      <div id="chrono" class="digits">00:00.0</div>
+      <div id="raceState" class="state">EN ATTENTE DU DÉPART</div>
+    </div>
+    
+    <div class="row" style="justify-content:center">
+      <button id="startBtn" class="btn green">▶ Top départ</button>
+      <button id="stopBtn" class="btn red">■ Clôturer</button>
+      <button id="resetBtn" class="btn ghost">↻ Reset chrono</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📷 Scanner l'arrivée</h2>
+    <div class="row">
+      <select id="cameraSelect" class="grow"></select>
+      <button id="cameraBtn" class="btn">📷 Activer Caméra</button>
+    </div>
+    <div id="reader"></div>
+    <div class="scanline">Scan continu automatique : visez le QR code du dossard à franchissement de ligne.</div>
+    <div class="row" style="margin-top:8px">
+      <input id="manualBib" class="manual" type="number" inputmode="numeric" placeholder="Dossard" autocomplete="off">
+      <button id="manualBtn" class="btn">OK</button>
+      <button id="backBtn" class="btn red">⌫</button>
+    </div>
+    <div class="pad">
+      <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button>
+      <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button>
+      <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button>
+      <button data-key="C">C</button><button data-key="0">0</button><button data-key="OK">✓</button>
+    </div>
+    <div id="lastScan" class="last"></div>
+  </div>
+</section>
+
+<section id="resultsTab" class="tab">
+  <div class="card">
+    <div class="row">
+      <div class="grow">
+        <h2>🏆 Classement officiel</h2>
+        <div id="resultCount" class="muted">0 arrivée enregistrée</div>
+      </div>
+      <button id="exportBtn" class="btn">⬇ Exporter CSV</button>
+    </div>
+    <div class="row" style="margin:12px 0">
+      <input id="filterText" class="grow" placeholder="Rechercher élève, classe ou dossard…">
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Pl.</th><th>Élève</th><th>Genre</th><th>Classe</th><th>Dossard</th><th>Temps</th></tr></thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="configTab" class="tab">
+  <div class="card">
+    <h2>🏫 Établissement scolaire</h2>
+    <div class="row">
+      <input id="etabInput" class="grow" placeholder="Identifiant (ex: clg-haignere)">
+      <button id="changeEtabBtn" class="btn">Basculer</button>
+    </div>
+    <div class="muted" style="margin-top:6px">Toutes les données (élèves, chronos, courses) restent isolées par collège.</div>
+  </div>
+
+  <div class="card">
+    <h2>🔗 Accès rapides & Partage</h2>
+    <div class="access-grid">
+      <div class="access-box">
+        <div>
+          <h4>⏱️ Chronomètre / Arrivée</h4>
+          <p>Tablette prof à la ligne d'arrivée pour le scan des dossards.</p>
+        </div>
+        <div class="access-actions">
+          <button id="copyAdminBtn" class="btn ghost grow">📋 Copier le lien</button>
+        </div>
+      </div>
+
+      <div class="access-box">
+        <div>
+          <h4>📺 Écran Stade (Direct)</h4>
+          <p>Affichage grand écran avec les 10 dernières arrivées.</p>
+        </div>
+        <div class="access-actions">
+          <button id="openScreenBtn" class="btn green grow">📺 Ouvrir</button>
+          <button id="copyScreenBtn" class="btn ghost grow">📋 Copier</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📥 1. Importer les élèves</h2>
+    <div class="muted" style="margin-bottom:10px">Format accepté : <b>Dossard;Nom;Prenom;Sexe;Classe</b> (ou Division / Niveau)[cite: 1]. Encodage UTF-8 et exports Excel supportés.</div>
+    <div class="importbox">
+      <input id="csvFile" class="file" type="file" accept=".csv,text/csv,text/plain">
+      <button id="importBtn" class="btn">Choisir un fichier CSV</button>
+      <div id="importInfo" class="muted" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🖨️ 2. Impression des Dossards</h2>
+    <div class="muted" style="margin-bottom:10px">Sélectionnez la planche A4 souhaitée :</div>
+    <div class="row">
+      <select id="bibsPerPageSelect" style="font-weight:700">
+        <option value="8">8 par page (Grands dossards 2×4)</option>
+        <option value="10" selected>10 par page (Standard 2×5)</option>
+        <option value="16">16 par page (Badges compacts 4×4)</option>
+        <option value="24">24 par page (Planche étiquettes 4×6)</option>
+      </select>
+      <button id="printBibsBtn" class="btn yellow">🖨️ Imprimer les dossards</button>
+    </div>
+  </div>
+</section>
+
+<section id="diagTab" class="tab">
+  <div class="card">
+    <h2>🔧 Diagnostic de connexion</h2>
+    <div class="diag">
+      <div id="d1">⏳ SDK Firebase…</div><div id="d2">⏳ Initialisation…</div>
+      <div id="d3">⏳ Firestore…</div><div id="d4">⏳ Écriture test…</div><div id="d5">⏳ Lecture test…</div>
+    </div>
+    <p id="diagError" class="errtxt"></p>
+    <button id="diagBtn" class="btn ghost">↻ Relancer le test</button>
+  </div>
+</section>
+</main>
+
+<!-- ÉCRAN DU STADE EN DIRECT (10 COUREURS) -->
+<section id="screenPage" class="screenPage">
+  <div class="screen">
+    <div class="screen-header-tag">
+      🏁 CROSS EPS · <span id="screenEtabDisplay" class="etab-badge"></span>
+    </div>
+    <h1 id="screenRaceTitle">Course 1</h1>
+    <div class="sub">
+      ● 10 DERNIÈRES ARRIVÉES EN DIRECT · TOTAL : <span id="screenCount">0</span>
+    </div>
+    <div id="liveList" class="live"></div>
+  </div>
+</section>
+
+<div id="printSection"></div>
+
+<script>
+const firebaseConfig={apiKey:"AIzaSyAh1Rf4u6iAdS81yX8yEgJ37vJAd9gOvI",authDomain:"cross-75701.firebaseapp.com",projectId:"cross-75701",storageBucket:"cross-75701.firebasestorage.app",messagingSenderId:"415446500180",appId:"1:415446500180:web:316da849eec78abb9afec1"};
+
+const urlParams = new URLSearchParams(location.search);
+let currentEtab = (urlParams.get("etab") || "defaut").toLowerCase().replace(/[^a-z0-9_-]/g, "");
+if (!currentEtab) currentEtab = "defaut";
+
+let db=null, courseId=null, courseData={}, results=[], students=[], scanner=null, scanning=false, timer=null, localStart=0;
+let lastScanTime=0, lastScanBib="";
+
+const $=id=>document.getElementById(id);
+const fmt=ms=>{ms=Math.max(0,Number(ms)||0);return String(Math.floor(ms/60000)).padStart(2,"0")+":"+String(Math.floor(ms%60000/1000)).padStart(2,"0")+"."+Math.floor(ms%1000/100)};
+function setStatus(t,c=""){ if($("firebaseStatus")){ $("firebaseStatus").textContent=t;$("firebaseStatus").className="status "+c; } }
+function diag(id,t,c){if($(id)){$(id).textContent=t;$(id).className=c||""}}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+
+function getEtabDoc(){ return db.collection("etablissements").doc(currentEtab); }
+function getActiveCourseRef(){ return getEtabDoc().collection("config").doc("active"); }
+function getCourseRef(id){ return getEtabDoc().collection("courses").doc(id || courseId); }
+
+function updateEtabUI(){
+  if($("currentEtabDisplay")) $("currentEtabDisplay").textContent = currentEtab;
+  if($("screenEtabDisplay")) $("screenEtabDisplay").textContent = currentEtab;
+  if($("etabInput")) $("etabInput").value = currentEtab;
+}
+
+const getAdminUrl = () => `${location.origin}${location.pathname}?etab=${currentEtab}`;
+const getScreenUrl = () => `${location.origin}${location.pathname}?etab=${currentEtab}&mode=screen`;
+
+if($("copyAdminBtn")) $("copyAdminBtn").onclick = () => {
+  navigator.clipboard.writeText(getAdminUrl());
+  $("copyAdminBtn").textContent = "✅ Copié !";
+  setTimeout(() => $("copyAdminBtn").textContent = "📋 Copier le lien", 2000);
+};
+
+if($("openScreenBtn")) $("openScreenBtn").onclick = () => window.open(getScreenUrl(), "_blank");
+
+if($("copyScreenBtn")) $("copyScreenBtn").onclick = () => {
+  navigator.clipboard.writeText(getScreenUrl());
+  $("copyScreenBtn").textContent = "✅ Copié !";
+  setTimeout(() => $("copyScreenBtn").textContent = "📋 Copier", 2000);
+};
+
+if($("changeEtabBtn")) $("changeEtabBtn").onclick = () => {
+  const next = $("etabInput").value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+  if(next && next !== currentEtab){
+    location.search = `?etab=${encodeURIComponent(next)}`;
+  }
+};
+
+async function init(){
+  updateEtabUI();
+  try{
+    diag("d1","⏳ SDK Firebase…","waittxt");
+    if(!window.firebase) throw new Error("SDK Firebase absent");
+    diag("d1","✅ SDK Firebase chargé","oktxt");
+    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    diag("d2","✅ Firebase initialisé","oktxt");
+    db = firebase.firestore();
+    diag("d3","⏳ Firestore…","waittxt");
+    await db.collection("cross_diagnostic").doc("connection").set({ok:true,at:firebase.firestore.FieldValue.serverTimestamp()});
+    diag("d4","✅ Écriture Firestore OK","oktxt");
+    const snap = await db.collection("cross_diagnostic").doc("connection").get({source:"server"});
+    diag("d3","✅ Firestore connecté","oktxt");
+    diag("d5",snap.exists?"✅ Lecture Firestore OK":"⚠️ Sans doc","oktxt");
+    setStatus("● Connecté : " + currentEtab,"ok");
+    await ensureActiveCourse();
+    listenActiveCourse();
+  }catch(e){
+    console.error(e);
+    setStatus("● Erreur Firebase","err");
+    diag("d3","❌ "+(e.code||"Firestore"),"errtxt");
+    if($("diagError")) $("diagError").textContent=e.message;
+  }
+}
+
+async function ensureActiveCourse(){
+  const ref = getActiveCourseRef(), snap = await ref.get();
+  if(snap.exists && snap.data().courseId){
+    courseId = snap.data().courseId;
+  } else {
+    courseId = "course_" + Date.now();
+    await ref.set({courseId, title:"Course 1", updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  }
+  await loadCourseMeta();
+}
+
+async function loadCourseMeta(){
+  const s = await getCourseRef(courseId).get();
+  if(!s.exists){
+    await getCourseRef(courseId).set({title:"Course 1", createdAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  }
+}
+
+let unsubResults=null, unsubStudents=null, unsubMeta=null;
+function listenActiveCourse(){
+  getActiveCourseRef().onSnapshot(async s => {
+    const id = s.data()?.courseId;
+    if(!id) return;
+    if(id !== courseId){
+      courseId = id;
+      await loadCourseMeta();
+    }
+    listenCourse();
+  });
+}
+
+function listenCourse(){
+  if(unsubResults) unsubResults();
+  if(unsubStudents) unsubStudents();
+  if(unsubMeta) unsubMeta();
+
+  const ref = getCourseRef(courseId);
+
+  unsubMeta = ref.onSnapshot(s => {
+    courseData = s.data() || {};
+    if($("raceTitle")) $("raceTitle").value = courseData.title || "Course 1";
+    if($("screenRaceTitle")) $("screenRaceTitle").textContent = courseData.title || "Course 1";
+    updateTimerState();
+  });
+
+  unsubStudents = ref.collection("students").onSnapshot(s => {
+    students = s.docs.map(d => ({id:d.id, ...d.data()}));
+  });
+
+  unsubResults = ref.collection("results").onSnapshot(s => {
+    results = s.docs.map(d => ({id:d.id, ...d.data()}));
+    results.sort((a,b)=>(Number(a.timeMs)||0)-(Number(b.timeMs)||0));
+    try{ renderResults(); }catch(e){}
+    try{ renderLive(); }catch(e){}
+  });
+}
+
+function updateTimerState(){
+  const st = Number(courseData.startAtMs)||0;
+  if(st>0){
+    localStart=st;
+    if(!courseData.finished){
+      startLocalTicker();
+      if($("raceState")) $("raceState").textContent="COURSE EN COURS";
+    } else {
+      if($("raceState")) $("raceState").textContent="COURSE CLÔTURÉE";
+    }
+  } else {
+    if($("raceState")) $("raceState").textContent="EN ATTENTE DU DÉPART";
+    if($("chrono")) $("chrono").textContent="00:00.0";
+  }
+}
+
+function startLocalTicker(){
+  clearInterval(timer);
+  timer=setInterval(()=>{if($("chrono")) $("chrono").textContent=fmt(Date.now()-localStart)},50);
+}
+
+if($("startBtn")) $("startBtn").onclick=async()=>{
+  const now=Date.now();
+  await getCourseRef(courseId).set({startAtMs:now,finished:false},{merge:true});
+  localStart=now;
+  startLocalTicker();
+};
+
+if($("stopBtn")) $("stopBtn").onclick=async()=>{
+  clearInterval(timer);
+  await getCourseRef(courseId).set({finished:true},{merge:true});
+  if($("raceState")) $("raceState").textContent="COURSE CLÔTURÉE";
+};
+
+if($("resetBtn")) $("resetBtn").onclick=async()=>{
+  if(!confirm("Réinitialiser le chrono de cette course ?")) return;
+  clearInterval(timer);
+  await getCourseRef(courseId).set({startAtMs:0,finished:false},{merge:true});
+  if($("chrono")) $("chrono").textContent="00:00.0";
+  if($("raceState")) $("raceState").textContent="EN ATTENTE DU DÉPART";
+};
+
+if($("raceTitle")) $("raceTitle").onchange=()=>getCourseRef(courseId).set({title:$("raceTitle").value||"Course"},{merge:true});
+
+if($("newRaceBtn")) $("newRaceBtn").onclick=async()=>{
+  if(!confirm("Créer une nouvelle course pour cet établissement ?")) return;
+  const id="course_"+Date.now();
+  await getCourseRef(id).set({title:"Course "+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),startAtMs:0,finished:false,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await getActiveCourseRef().set({courseId:id,title:"Course",updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  courseId=id;
+  listenCourse();
+};
+
+/* SCAN RAPIDE SANS POP-UP */
+async function recordArrival(raw){
+  let bib = String(raw??"").trim().replace(/[^\d]/g,"");
+  if(!bib) return;
+
+  const now = Date.now();
+  if(bib === lastScanBib && (now - lastScanTime) < 2000) return;
+  lastScanBib = bib;
+  lastScanTime = now;
+
+  const ref = getCourseRef(courseId);
+  const resRef = ref.collection("results").doc("dossard_"+bib);
+  const st = students.find(s=>String(s.dossard)===bib);
+
+  const start = Number(courseData.startAtMs)||0;
+  const timeMs = start > 0 ? Math.max(0, now - start) : 0;
+
+  try{
+    let dup = false;
+    await db.runTransaction(async tx=>{
+      const old = await tx.get(resRef);
+      if(old.exists){ dup=true; return; }
+      tx.set(resRef,{
+        dossard: bib,
+        nom: st?.nom||"",
+        prenom: st?.prenom||"",
+        classe: st?.classe||st?.division||"",
+        sexe: (st?.sexe||"").toUpperCase().trim(),
+        timeMs,
+        scannedAtMs: now,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    });
+
+    showLast(bib, st, timeMs, dup);
+  }catch(e){
+    console.warn("Scan err:", e.message);
+  }
+  if($("manualBib")) $("manualBib").value="";
+}
+
+function showLast(bib,st,time,dup){
+  if(!$("lastScan")) return;
+  $("lastScan").className = "last show" + (dup ? " duplicate" : "");
+  const nom = st ? `${st.nom} ${st.prenom}` : `Dossard #${bib}`;
+  const cls = st?.classe || st?.division || "";
+  if(dup){
+    $("lastScan").innerHTML = `⚠️ <b>#${esc(bib)} ${esc(nom)}</b> est déjà enregistré !`;
+  } else {
+    $("lastScan").innerHTML = `🏁 <b>#${esc(bib)} ${esc(nom)}</b> (${esc(cls)}) franchit la ligne à <b>${fmt(time)}</b>`;
+  }
+}
+
+if($("manualBtn")) $("manualBtn").onclick=()=>recordArrival($("manualBib").value);
+if($("manualBib")) $("manualBib").onkeydown=e=>{if(e.key==="Enter")recordArrival(e.target.value)};
+if($("backBtn")) $("backBtn").onclick=()=>{$("manualBib").value=$("manualBib").value.slice(0,-1);$("manualBib").focus()};
+
+document.querySelectorAll(".pad button").forEach(b=>b.onclick=()=>{
+  const k=b.dataset.key;
+  if(k==="C")$("manualBib").value="";
+  else if(k==="OK")recordArrival($("manualBib").value);
+  else $("manualBib").value+=k;
+  $("manualBib").focus();
+});
+
+async function cameras(){
+  try{
+    const cams=await Html5Qrcode.getCameras();
+    if($("cameraSelect")) $("cameraSelect").innerHTML="";
+    cams.forEach((c,i)=>{
+      const o=document.createElement("option");
+      o.value=c.id;
+      o.textContent=c.label||"Caméra "+(i+1);
+      if($("cameraSelect")) $("cameraSelect").appendChild(o);
+    });
+  }catch(e){
+    if($("cameraSelect")) $("cameraSelect").innerHTML="<option>Caméra indisponible</option>";
+  }
+}
+
+if($("cameraBtn")) $("cameraBtn").onclick=async()=>{
+  if(scanning){
+    try{await scanner.stop()}catch(e){}
+    scanning=false;
+    $("cameraBtn").textContent="📷 Activer Caméra";
+    return;
+  }
+  try{
+    scanner=scanner||new Html5Qrcode("reader");
+    await scanner.start($("cameraSelect").value,{fps:20,qrbox:{width:260,height:180}},txt=>recordArrival(txt),()=>{});
+    scanning=true;
+    $("cameraBtn").textContent="⏹ Arrêter Caméra";
+  }catch(e){
+    alert("Impossible d'ouvrir la caméra : "+e.message);
+  }
+};
+
+function renderResults(){
+  if(!$("resultsBody")) return;
+  const q=$("filterText").value.toLowerCase().trim();
+  let a=results.filter(r=>(r.nom+" "+r.prenom+" "+r.classe+" "+r.dossard).toLowerCase().includes(q));
+  if($("resultCount")) $("resultCount").textContent=results.length+" arrivée(s) enregistrée(s)";
+  $("resultsBody").innerHTML=a.map((r,i)=>`
+    <tr>
+      <td><span class="rank-badge ${i===0?'r1':(i===1?'r2':(i===2?'r3':''))}">${i+1}</span></td>
+      <td><b>${esc(r.nom||"—")}</b> ${esc(r.prenom||"")}</td>
+      <td>${esc(r.sexe||"—")}</td>
+      <td>${esc(r.classe||"—")}</td>
+      <td><b>${esc(r.dossard)}</b></td>
+      <td><b>${fmt(r.timeMs)}</b></td>
+    </tr>
+  `).join("")||"<tr><td colspan=6 style='text-align:center;color:#94a3b8;padding:36px'>Aucune arrivée pour le moment</td></tr>";
+}
+
+/* RENDU GRAND ÉCRAN STADE : 10 DERNIERS COUREURS */
+function renderLive(){
+  if(!$("liveList")) return;
+  if($("screenCount")) $("screenCount").textContent=results.length;
+
+  if(!results.length){
+    $("liveList").innerHTML="<div class='empty'>🏁<br><br>EN ATTENTE DES PREMIERS COUREURS SUR LA LIGNE…</div>";
+    return;
+  }
+
+  const derniers=[...results].sort((x,y)=>(Number(y.scannedAtMs)||0)-(Number(x.scannedAtMs)||0)).slice(0, 10);
+
+  $("liveList").innerHTML=derniers.map(r=>{
+    const rang=results.findIndex(x=>String(x.dossard)===String(r.dossard))+1;
+    const s=String(r.sexe||"").toUpperCase().trim();
+    const isFille=s==="F"||s==="FILLE";
+    const isGarcon=s==="M"||s==="G"||s==="GARCON";
+    const clr=isFille?"fille":(isGarcon?"garcon":"");
+    const tag=isFille?`<span class="liveGenderTag">Fille</span>`:(isGarcon?`<span class="liveGenderTag">Garçon</span>`:"");
+    const nom=((r.nom||"")+" "+(r.prenom||"")).trim()||("Dossard #"+r.dossard);
+    const cls=r.classe?`<span class="badge">Classe : <b>${esc(r.classe)}</b></span>`:"";
+
+    let medal = "";
+    if (rang === 1) medal = "🥇 ";
+    else if (rang === 2) medal = "🥈 ";
+    else if (rang === 3) medal = "🥉 ";
+
+    return `
+      <div class="liveitem ${clr}">
+        <div class="liveRank">${medal}#${rang}</div>
+        <div>
+          <div class="liveName">${esc(nom)}</div>
+          <div class="liveMeta">
+            <span class="badge">Dossard <b>#${esc(r.dossard)}</b></span>
+            ${cls}
+            ${tag}
+          </div>
+        </div>
+        <div class="liveTime">${fmt(r.timeMs)}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+if($("filterText")) $("filterText").oninput=renderResults;
+
+if($("exportBtn")) $("exportBtn").onclick=()=>{
+  const rows=[["Classement","Nom","Prénom","Sexe","Classe","Dossard","Temps"],...results.map((r,i)=>[i+1,r.nom||"",r.prenom||"",r.sexe||"",r.classe||"",r.dossard,fmt(r.timeMs)])];
+  const csv="\uFEFF"+rows.map(r=>r.map(x=>`"${String(x).replaceAll('"','""')}"`).join(";")).join("\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download=`classement_${currentEtab}_${courseId}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+/* LECTEUR CSV UNIVERSEL (UTF-8, UTF-16 EXCEL, TAB, POINTS-VIRGULES) */
+function readFileAsText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      let text = e.target.result || "";
+      if (text.includes('\0')) {
+        const r16 = new FileReader();
+        r16.onload = ev => resolve((ev.target.result || "").replace(/\0/g, ''));
+        r16.onerror = () => resolve(text.replace(/\0/g, ''));
+        r16.readAsText(file, 'utf-16le');
+        return;
+      }
+      resolve(text);
+    };
+    reader.onerror = reject;
+    reader.readAsText(file, 'utf-8');
+  });
+}
+
+function splitCSVLine(line, sep) {
+  let out = [], cur = "", q = false;
+  for (let i = 0; i < line.length; i++) {
+    let c = line[i];
+    if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; continue; }
+    if (c === '"') { q = !q; continue; }
+    if (c === sep && !q) { out.push(cur.trim().replace(/^["']|["']$/g, '')); cur = ""; }
+    else cur += c;
+  }
+  out.push(cur.trim().replace(/^["']|["']$/g, ''));
+  return out;
+}
+
+function parseCSV(text) {
+  text = text.replace(/^\uFEFF/, "").replace(/\0/g, "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const rawLines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+  if (!rawLines.length) return [];
+
+  const delims = [';', '\t', ',', '|'];
+  let bestDelim = ';', maxScore = -1;
+  delims.forEach(d => {
+    let score = 0;
+    rawLines.slice(0, 5).forEach(l => score += (l.split(d).length - 1));
+    if (score > maxScore) { maxScore = score; bestDelim = d; }
+  });
+
+  const keywords = ["dossard", "doss", "num", "n°", "no", "bib", "nom", "prenom", "classe", "division", "niveau", "sexe", "genre"];
+  let headerIdx = -1;
+
+  for (let i = 0; i < Math.min(10, rawLines.length); i++) {
+    const normLine = rawLines[i].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    let matches = 0;
+    keywords.forEach(kw => { if (normLine.includes(kw)) matches++; });
+    if (matches >= 2) {
+      headerIdx = i;
+      break;
+    }
+  }
+
+  const cleanBib = val => String(val || "").trim().replace(/[^\d]/g, "");
+  let results = [];
+
+  if (headerIdx !== -1) {
+    const cols = splitCSVLine(rawLines[headerIdx], bestDelim).map(c => 
+      c.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    );
+
+    const findCol = kws => {
+      for (const kw of kws) {
+        const found = cols.findIndex(c => c.includes(kw));
+        if (found >= 0) return found;
+      }
+      return -1;
+    };
+
+    const D = findCol(["dossard", "doss", "num", "n°", "no", "bib", "id", "code"]);
+    const N = findCol(["nom"]);
+    const P = findCol(["prenom", "first"]);
+    const C = findCol(["classe", "division", "groupe", "section", "div"]);
+    const Niv = findCol(["niveau"]);
+    const S = findCol(["sexe", "genre", "civ"]);
+
+    for (let i = headerIdx + 1; i < rawLines.length; i++) {
+      const parts = splitCSVLine(rawLines[i], bestDelim);
+      const v = idx => (idx >= 0 && idx < parts.length) ? parts[idx].trim() : "";
+      const bib = cleanBib(v(D));
+
+      if (bib) {
+        let classeTxt = v(C);
+        if (v(Niv) && v(Niv) !== classeTxt) {
+          classeTxt = classeTxt ? `${classeTxt} (${v(Niv)})` : v(Niv);
+        }
+
+        results.push({
+          dossard: bib,
+          nom: v(N),
+          prenom: v(P),
+          classe: classeTxt,
+          sexe: v(S).toUpperCase().trim()
+        });
+      }
+    }
+  } else {
+    rawLines.forEach(l => {
+      const parts = splitCSVLine(l, bestDelim);
+      let bib = "", nom = "", prenom = "", sexe = "", classe = "";
+      parts.forEach(p => {
+        const onlyNum = cleanBib(p);
+        if (onlyNum && !bib && p === onlyNum) {
+          bib = onlyNum;
+        } else if (["M", "F", "G", "H", "GARCON", "FILLE"].includes(p.toUpperCase()) && !sexe) {
+          sexe = p.toUpperCase();
+        } else if (!nom) {
+          nom = p;
+        } else if (!prenom) {
+          prenom = p;
+        } else if (!classe) {
+          classe = p;
+        }
+      });
+      if (bib) {
+        results.push({ dossard: bib, nom, prenom, classe, sexe });
+      }
+    });
+  }
+
+  return results;
+}
+
+if($("importBtn")) $("importBtn").onclick = () => $("csvFile").click();
+
+if($("csvFile")) $("csvFile").onchange = async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  $("importInfo").textContent = "Lecture et analyse du fichier…";
+
+  try {
+    const rawText = await readFileAsText(f);
+    const rows = parseCSV(rawText);
+
+    if (!rows.length) {
+      throw new Error("Aucun dossard numérique détecté. Vérifiez le format du fichier.");
+    }
+
+    if (!courseId) await ensureActiveCourse();
+    $("importInfo").textContent = `Enregistrement de ${rows.length} élèves dans Firebase…`;
+
+    const col = getCourseRef(courseId).collection("students");
+    for (let i = 0; i < rows.length; i += 400) {
+      const b = db.batch();
+      rows.slice(i, i + 400).forEach(s => {
+        b.set(col.doc("dossard_" + s.dossard), s, { merge: true });
+      });
+      await b.commit();
+    }
+
+    $("importInfo").textContent = `✅ ${rows.length} élèves importés avec succès ! (Dossards prêts à imprimer)`;
+    e.target.value = "";
+  } catch (err) {
+    console.error(err);
+    $("importInfo").textContent = "❌ " + err.message;
+  }
+};
+
+/* IMPRESSION MODULABLE DES DOSSARDS */
+$("printBibsBtn").onclick = () => {
+  if (!students || students.length === 0) {
+    alert("Veuillez d'abord importer un fichier CSV avec les élèves.");
+    return;
+  }
+
+  const perPage = parseInt($("bibsPerPageSelect").value, 10) || 10;
+  const sorted = [...students].sort((a, b) => Number(a.dossard) - Number(b.dossard));
+  const printSection = $("printSection");
+  printSection.innerHTML = "";
+
+  const qrPixelSize = (perPage >= 16) ? 58 : 84;
+
+  for (let i = 0; i < sorted.length; i += perPage) {
+    const page = document.createElement("div");
+    page.className = `bib-page layout-${perPage}`;
+
+    const slice = sorted.slice(i, i + perPage);
+    slice.forEach(student => {
+      page.appendChild(createBibCard(student, qrPixelSize));
+    });
+
+    printSection.appendChild(page);
+  }
+
+  setTimeout(() => {
+    window.print();
+  }, 400);
+};
+
+function createBibCard(student, qrSize) {
+  const card = document.createElement("div");
+  card.className = "bib-card";
+
+  const sexe = student.sexe === "F" ? "F" : (student.sexe === "M" ? "G" : "");
+  const qrId = "qr_" + student.dossard + "_" + Math.random().toString(36).substr(2, 5);
+  const classeNom = student.classe || student.division || student.niveau || "—";
+
+  card.innerHTML = `
+    <div class="bib-top">
+      <span class="school-title">${esc(currentEtab.toUpperCase())}</span>
+      <span class="gender-tag">${esc(sexe)}</span>
+    </div>
+    <div class="bib-center">
+      <div class="bib-number">${esc(student.dossard)}</div>
+      <div id="${qrId}" class="bib-qr"></div>
+    </div>
+    <div class="bib-bottom">
+      <div class="bib-name">${esc(student.nom)} ${esc(student.prenom)}</div>
+      <div class="bib-class">${esc(classeNom)}</div>
+    </div>
+  `;
+
+  setTimeout(() => {
+    const container = card.querySelector("#" + qrId);
+    if (container) {
+      new QRCode(container, {
+        text: String(student.dossard),
+        width: qrSize,
+        height: qrSize,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+  }, 0);
+
+  return card;
+}
+
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  $(b.dataset.tab).classList.add("active");
+});
+
+function enterScreen(){
+  if($("appHeader")) $("appHeader").classList.add("hidden");
+  if($("mainNav")) $("mainNav").classList.add("hidden");
+  if($("normalApp")) $("normalApp").classList.add("hidden");
+  $("screenPage").classList.add("active");
+  document.body.style.background="#0f172a";
+}
+
+if(urlParams.get("mode")==="screen") enterScreen();
+cameras();
+init();
+</script>
+</body>
+</html>
