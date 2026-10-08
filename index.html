@@ -775,7 +775,7 @@ th {
 
   <div class="card">
     <h2>📥 1. Importer les élèves</h2>
-    <div class="muted" style="margin-bottom:10px">Format accepté : <b>Dossard;Nom;Prenom;Sexe;Classe</b> (ou Division / Niveau)[cite: 1].</div>
+    <div class="muted" style="margin-bottom:10px">Format accepté : <b>Dossard;Nom;Prenom;Sexe;Classe</b> (ou Division / Niveau).</div>
     <div class="importbox">
       <input id="csvFile" class="file" type="file" accept=".csv,text/csv,text/plain">
       <button id="importBtn" class="btn">Choisir un fichier CSV</button>
@@ -956,8 +956,15 @@ function listenCourse(){
     updateTimerState();
   });
 
-  unsubStudents = ref.collection("students").onSnapshot(s => {
-    students = s.docs.map(d => ({id:d.id, ...d.data()}));
+  // CHARGEMENT ÉLÈVES : D'abord niveau établissement, sinon niveau course (rétrocompatible)
+  unsubStudents = getEtabDoc().collection("students").onSnapshot(s => {
+    if (!s.empty) {
+      students = s.docs.map(d => ({id: d.id, ...d.data()}));
+    } else {
+      ref.collection("students").onSnapshot(sub => {
+        students = sub.docs.map(d => ({id: d.id, ...d.data()}));
+      });
+    }
   });
 
   unsubResults = ref.collection("results").onSnapshot(s => {
@@ -1023,6 +1030,7 @@ if($("newRaceBtn")) $("newRaceBtn").onclick=async()=>{
   loadHistory();
 };
 
+/* SCAN RAPIDE SANS POP-UP AVEC LIAISON DOSSARD OPTIMISÉE */
 async function recordArrival(raw){
   let bib = String(raw??"").trim().replace(/[^\d]/g,"");
   if(!bib) return;
@@ -1034,7 +1042,12 @@ async function recordArrival(raw){
 
   const ref = getCourseRef(courseId);
   const resRef = ref.collection("results").doc("dossard_"+bib);
-  const st = students.find(s=>String(s.dossard)===bib);
+
+  // Recherche tolérante (valeur numérique ou chaîne identique)
+  const numBib = parseInt(bib, 10);
+  const st = students.find(s => {
+    return String(s.dossard) === bib || parseInt(s.dossard, 10) === numBib;
+  });
 
   const start = Number(courseData.startAtMs)||0;
   const timeMs = start > 0 ? Math.max(0, now - start) : 0;
@@ -1136,6 +1149,7 @@ function renderResults(){
   `).join("")||"<tr><td colspan=6 style='text-align:center;color:#94a3b8;padding:36px'>Aucune arrivée pour le moment</td></tr>";
 }
 
+/* RENDU GRAND ÉCRAN STADE : 10 DERNIERS COUREURS */
 function renderLive(){
   if(!$("liveList")) return;
   if($("screenCount")) $("screenCount").textContent=results.length;
@@ -1322,7 +1336,6 @@ window.switchRace = async function(newId) {
   courseId = newId;
   listenCourse();
   loadHistory();
-  alert(`Course basculée sur : ${title}`);
 };
 
 window.exportHistoryCsv = async function(raceDocId, raceTitle) {
@@ -1472,6 +1485,7 @@ function parseCSV(text) {
 
 if($("importBtn")) $("importBtn").onclick = () => $("csvFile").click();
 
+/* IMPORT CENTRALISÉ AU NIVEAU DE L'ÉTABLISSEMENT */
 if($("csvFile")) $("csvFile").onchange = async e => {
   const f = e.target.files[0];
   if (!f) return;
@@ -1488,16 +1502,20 @@ if($("csvFile")) $("csvFile").onchange = async e => {
     if (!courseId) await ensureActiveCourse();
     $("importInfo").textContent = `Enregistrement de ${rows.length} élèves dans Firebase…`;
 
-    const col = getCourseRef(courseId).collection("students");
-    for (let i = 0; i < rows.length; i += 400) {
+    // Écriture au niveau de l'établissement ET de la course active pour cohérence totale
+    const etabCol = getEtabDoc().collection("students");
+    const raceCol = getCourseRef(courseId).collection("students");
+
+    for (let i = 0; i < rows.length; i += 300) {
       const b = db.batch();
-      rows.slice(i, i + 400).forEach(s => {
-        b.set(col.doc("dossard_" + s.dossard), s, { merge: true });
+      rows.slice(i, i + 300).forEach(s => {
+        b.set(etabCol.doc("dossard_" + s.dossard), s, { merge: true });
+        b.set(raceCol.doc("dossard_" + s.dossard), s, { merge: true });
       });
       await b.commit();
     }
 
-    $("importInfo").textContent = `✅ ${rows.length} élèves importés avec succès ! (Dossards prêts à imprimer)`;
+    $("importInfo").textContent = `✅ ${rows.length} élèves importés et liés à toutes les courses !`;
     e.target.value = "";
   } catch (err) {
     console.error(err);
