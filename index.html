@@ -2,8 +2,16 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#1e3a8a">
+
+<!-- DÉCLARATION PWA & PLEIN ÉCRAN -->
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cross EPS">
+
 <title>Cross Scolaire EPS — Stade & Chrono</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -258,7 +266,7 @@ input:focus, select:focus {
 }
 .level input { accent-color: var(--navy); }
 
-/* SCANNER & CAMÉRA */
+/* SCANNER & CAMERA */
 #reader {
   background: #000;
   border-radius: var(--radius-sm);
@@ -714,7 +722,6 @@ th {
   </div>
 </section>
 
-<!-- NOUVEL ONGLET HISTORIQUE -->
 <section id="historyTab" class="tab">
   <div class="card">
     <div class="row">
@@ -804,7 +811,6 @@ th {
 </section>
 </main>
 
-<!-- ÉCRAN EN DIRECT (10 COUREURS) -->
 <section id="screenPage" class="screenPage">
   <div class="screen">
     <div class="screen-header-tag">
@@ -1017,7 +1023,6 @@ if($("newRaceBtn")) $("newRaceBtn").onclick=async()=>{
   loadHistory();
 };
 
-/* SCAN RAPIDE CONTINU */
 async function recordArrival(raw){
   let bib = String(raw??"").trim().replace(/[^\d]/g,"");
   if(!bib) return;
@@ -1131,7 +1136,6 @@ function renderResults(){
   `).join("")||"<tr><td colspan=6 style='text-align:center;color:#94a3b8;padding:36px'>Aucune arrivée pour le moment</td></tr>";
 }
 
-/* RENDU GRAND ÉCRAN STADE : 10 DERNIERS COUREURS */
 function renderLive(){
   if(!$("liveList")) return;
   if($("screenCount")) $("screenCount").textContent=results.length;
@@ -1177,9 +1181,6 @@ function renderLive(){
 
 if($("filterText")) $("filterText").oninput=renderResults;
 
-/* ======================================================== */
-/* EXPORT CSV & NOUVEL EXPORT PDF OFFICIEL                   */
-/* ======================================================== */
 if($("exportBtn")) $("exportBtn").onclick=()=>{
   exportCourseCsv(courseId, courseData.title || "Course", results);
 };
@@ -1206,14 +1207,13 @@ function exportCoursePdf(cId, title, resList){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-  // En-tête officiel
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.setTextColor(30, 58, 138); // Bleu Marine
+  doc.setTextColor(30, 58, 138);
   doc.text(`CROSS SCOLAIRE EPS — ${currentEtab.toUpperCase()}`, 14, 16);
 
   doc.setFontSize(13);
-  doc.setTextColor(185, 28, 28); // Rouge tartan
+  doc.setTextColor(185, 28, 28);
   doc.text(`Classement Officiel : ${title}`, 14, 23);
 
   doc.setFont("helvetica", "normal");
@@ -1256,7 +1256,6 @@ function exportCoursePdf(cId, title, resList){
       5: { halign: "right", fontStyle: "bold", cellWidth: 25 }
     },
     didDrawPage: data => {
-      // Pied de page
       doc.setFontSize(8);
       doc.setTextColor(150);
       doc.text(
@@ -1270,9 +1269,6 @@ function exportCoursePdf(cId, title, resList){
   doc.save(`classement_${currentEtab}_${title.replace(/[^a-z0-9_-]/gi,'_')}.pdf`);
 }
 
-/* ======================================================== */
-/* HISTORIQUE COMPLET DES COURSES DU COLLÈGE               */
-/* ======================================================== */
 async function loadHistory(){
   const container = $("historyList");
   if (!container) return;
@@ -1291,7 +1287,6 @@ async function loadHistory(){
       const id = doc.id;
       const isActive = (id === courseId);
       
-      // Récupération rapide du nombre d'arrivées
       const resSnap = await getEtabDoc().collection("courses").doc(id).collection("results").get();
       const count = resSnap.size;
 
@@ -1600,6 +1595,13 @@ function enterScreen(){
 if(urlParams.get("mode")==="screen") enterScreen();
 cameras();
 init();
+
+/* ENREGISTREMENT DU SERVICE WORKER (PWA) */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(err => console.log("SW Reg Error:", err));
+  });
+}
 </script>
 </body>
 </html>
