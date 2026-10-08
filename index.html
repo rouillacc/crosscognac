@@ -10,6 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Oswald:wght@500;600;700&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
 
@@ -256,7 +258,7 @@ input:focus, select:focus {
 }
 .level input { accent-color: var(--navy); }
 
-/* ZONE SCANNER & CAMÉRA */
+/* SCANNER & CAMÉRA */
 #reader {
   background: #000;
   border-radius: var(--radius-sm);
@@ -268,7 +270,6 @@ input:focus, select:focus {
 }
 .scanline { font-size: 0.76rem; color: var(--muted); margin: 6px 0; }
 
-/* BANDEAU DERNIER SCAN (PLIE SOUS LA CAMERA) */
 .last {
   display: none;
   margin: 8px 0;
@@ -329,7 +330,7 @@ input:focus, select:focus {
 }
 .pad button:active { background: #e2e8f0; }
 
-/* TABLEAU DES ARRIVÉES */
+/* TABLEAUX */
 .tablewrap {
   overflow: auto;
   max-height: 480px;
@@ -357,6 +358,34 @@ th {
 .r1 { background: #fef08a; color: #854d0e; border: 1px solid #facc15; }
 .r2 { background: #e2e8f0; color: #334155; border: 1px solid #94a3b8; }
 .r3 { background: #fed7aa; color: #9a3412; border: 1px solid #fb923c; }
+
+/* HISTORIQUE */
+.history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  background: #fff;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.history-item.active-race {
+  border-left: 6px solid #15803d;
+  background: #f0fdf4;
+}
+.history-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+.history-meta {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
 
 .access-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
 .access-box {
@@ -598,6 +627,7 @@ th {
 <nav id="mainNav">
   <button class="active" data-tab="liveTab">⏱️ Arrivées</button>
   <button data-tab="resultsTab">🏆 Classement</button>
+  <button data-tab="historyTab">📜 Historique</button>
   <button data-tab="configTab">🏫 Établissement</button>
   <button data-tab="diagTab">🔧 Test</button>
 </nav>
@@ -638,10 +668,8 @@ th {
     <div id="reader"></div>
     <div class="scanline">Pointez l'objectif vers le QR code. L'élève scanné apparaît ci-dessous :</div>
 
-    <!-- BANDEAU RÉSULTAT PLACÉ DIRECTEMENT SOUS LA CAMÉRA -->
     <div id="lastScan" class="last"></div>
 
-    <!-- CLAVIER MANUEL COMPACT ET REPLIABLE -->
     <div class="manual-wrapper">
       <div class="manual-header" id="togglePadBtn">
         <span>⌨️ Saisie manuelle dossard</span>
@@ -671,6 +699,7 @@ th {
         <h2>🏆 Classement officiel</h2>
         <div id="resultCount" class="muted">0 arrivée enregistrée</div>
       </div>
+      <button id="exportPdfBtn" class="btn green">📄 Exporter PDF</button>
       <button id="exportBtn" class="btn">⬇ Exporter CSV</button>
     </div>
     <div class="row" style="margin:10px 0">
@@ -681,6 +710,22 @@ th {
         <thead><tr><th>Pl.</th><th>Élève</th><th>Genre</th><th>Classe</th><th>Dossard</th><th>Temps</th></tr></thead>
         <tbody id="resultsBody"></tbody>
       </table>
+    </div>
+  </div>
+</section>
+
+<!-- NOUVEL ONGLET HISTORIQUE -->
+<section id="historyTab" class="tab">
+  <div class="card">
+    <div class="row">
+      <div class="grow">
+        <h2>📜 Historique des courses de l'établissement</h2>
+        <div class="muted">Retrouvez toutes les courses enregistrées pour ce collège, rechargez-les ou exportez leurs résultats en PDF/CSV.</div>
+      </div>
+      <button id="refreshHistoryBtn" class="btn ghost">↻ Actualiser</button>
+    </div>
+    <div id="historyList" style="margin-top:12px">
+      <div class="muted" style="text-align:center;padding:20px">Chargement de l'historique…</div>
     </div>
   </div>
 </section>
@@ -825,7 +870,6 @@ if($("changeEtabBtn")) $("changeEtabBtn").onclick = () => {
   }
 };
 
-/* REPLI DU CLAVIER */
 let padVisible = true;
 if($("togglePadBtn")){
   $("togglePadBtn").onclick = () => {
@@ -965,13 +1009,15 @@ if($("raceTitle")) $("raceTitle").onchange=()=>getCourseRef(courseId).set({title
 if($("newRaceBtn")) $("newRaceBtn").onclick=async()=>{
   if(!confirm("Créer une nouvelle course pour cet établissement ?")) return;
   const id="course_"+Date.now();
-  await getCourseRef(id).set({title:"Course "+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),startAtMs:0,finished:false,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-  await getActiveCourseRef().set({courseId:id,title:"Course",updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  const title = "Course " + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  await getCourseRef(id).set({title, startAtMs:0, finished:false, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await getActiveCourseRef().set({courseId:id, title, updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
   courseId=id;
   listenCourse();
+  loadHistory();
 };
 
-/* SCAN RAPIDE SANS POP-UP */
+/* SCAN RAPIDE CONTINU */
 async function recordArrival(raw){
   let bib = String(raw??"").trim().replace(/[^\d]/g,"");
   if(!bib) return;
@@ -1131,15 +1177,174 @@ function renderLive(){
 
 if($("filterText")) $("filterText").oninput=renderResults;
 
+/* ======================================================== */
+/* EXPORT CSV & NOUVEL EXPORT PDF OFFICIEL                   */
+/* ======================================================== */
 if($("exportBtn")) $("exportBtn").onclick=()=>{
-  const rows=[["Classement","Nom","Prénom","Sexe","Classe","Dossard","Temps"],...results.map((r,i)=>[i+1,r.nom||"",r.prenom||"",r.sexe||"",r.classe||"",r.dossard,fmt(r.timeMs)])];
+  exportCourseCsv(courseId, courseData.title || "Course", results);
+};
+
+if($("exportPdfBtn")) $("exportPdfBtn").onclick=()=>{
+  exportCoursePdf(courseId, courseData.title || "Course", results);
+};
+
+function exportCourseCsv(cId, title, resList){
+  const rows=[["Classement","Nom","Prénom","Sexe","Classe","Dossard","Temps"],...resList.map((r,i)=>[i+1,r.nom||"",r.prenom||"",r.sexe||"",r.classe||"",r.dossard,fmt(r.timeMs)])];
   const csv="\uFEFF"+rows.map(r=>r.map(x=>`"${String(x).replaceAll('"','""')}"`).join(";")).join("\n");
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
-  a.download=`classement_${currentEtab}_${courseId}.csv`;
+  a.download=`classement_${currentEtab}_${title.replace(/[^a-z0-9_-]/gi,'_')}.csv`;
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+function exportCoursePdf(cId, title, resList){
+  if (!window.jspdf) {
+    alert("Erreur de chargement du module PDF. Vérifiez la connexion.");
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+  // En-tête officiel
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.setTextColor(30, 58, 138); // Bleu Marine
+  doc.text(`CROSS SCOLAIRE EPS — ${currentEtab.toUpperCase()}`, 14, 16);
+
+  doc.setFontSize(13);
+  doc.setTextColor(185, 28, 28); // Rouge tartan
+  doc.text(`Classement Officiel : ${title}`, 14, 23);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(100, 116, 139);
+  const dateStr = new Date().toLocaleDateString("fr-FR", { day:"numeric", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit" });
+  doc.text(`Édité le ${dateStr} · Total arrivants : ${resList.length}`, 14, 28);
+
+  const tableData = resList.map((r, i) => [
+    i + 1,
+    ((r.nom || "") + " " + (r.prenom || "")).trim() || "—",
+    r.sexe || "—",
+    r.classe || "—",
+    r.dossard,
+    fmt(r.timeMs)
+  ]);
+
+  doc.autoTable({
+    startY: 32,
+    head: [["Pl.", "Élève (Nom & Prénom)", "Genre", "Classe", "Dossard", "Temps"]],
+    body: tableData,
+    theme: "striped",
+    headStyles: {
+      fillColor: [30, 58, 138],
+      textColor: [255, 255, 255],
+      fontStyle: "bold",
+      fontSize: 9
+    },
+    styles: {
+      font: "helvetica",
+      fontSize: 9,
+      cellPadding: 2.5
+    },
+    columnStyles: {
+      0: { halign: "center", fontStyle: "bold", cellWidth: 12 },
+      1: { fontStyle: "bold", cellWidth: 65 },
+      2: { halign: "center", cellWidth: 18 },
+      3: { halign: "center", cellWidth: 30 },
+      4: { halign: "center", fontStyle: "bold", cellWidth: 22 },
+      5: { halign: "right", fontStyle: "bold", cellWidth: 25 }
+    },
+    didDrawPage: data => {
+      // Pied de page
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(
+        `Cross EPS · ${currentEtab.toUpperCase()} — Page ${data.pageNumber} sur ${doc.internal.getNumberOfPages()}`,
+        14,
+        doc.internal.pageSize.height - 8
+      );
+    }
+  });
+
+  doc.save(`classement_${currentEtab}_${title.replace(/[^a-z0-9_-]/gi,'_')}.pdf`);
+}
+
+/* ======================================================== */
+/* HISTORIQUE COMPLET DES COURSES DU COLLÈGE               */
+/* ======================================================== */
+async function loadHistory(){
+  const container = $("historyList");
+  if (!container) return;
+  container.innerHTML = "<div class='muted' style='text-align:center;padding:20px'>Chargement de l'historique…</div>";
+
+  try {
+    const snap = await getEtabDoc().collection("courses").orderBy("createdAt", "desc").get();
+    if (snap.empty) {
+      container.innerHTML = "<div class='muted' style='text-align:center;padding:20px'>Aucune course enregistrée pour cet établissement.</div>";
+      return;
+    }
+
+    let html = "";
+    for (const doc of snap.docs) {
+      const c = doc.data();
+      const id = doc.id;
+      const isActive = (id === courseId);
+      
+      // Récupération rapide du nombre d'arrivées
+      const resSnap = await getEtabDoc().collection("courses").doc(id).collection("results").get();
+      const count = resSnap.size;
+
+      const dateLabel = c.createdAt ? new Date(c.createdAt.toMillis()).toLocaleString("fr-FR", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" }) : "—";
+      const statusBadge = c.finished ? "<span style='color:var(--track);font-weight:700'>Clôturée</span>" : "<span style='color:var(--green);font-weight:700'>En cours</span>";
+
+      html += `
+        <div class="history-item ${isActive ? 'active-race' : ''}">
+          <div>
+            <div class="history-title">${esc(c.title || id)} ${isActive ? '· <span style="color:#15803d;font-size:0.85rem">(Active)</span>' : ''}</div>
+            <div class="history-meta">Créée le : ${dateLabel} · Statut : ${statusBadge} · <b>${count} arrivée(s)</b></div>
+          </div>
+          <div class="row">
+            ${!isActive ? `<button class="btn green" style="padding:6px 10px;font-size:0.8rem" onclick="switchRace('${id}')">👁️ Charger</button>` : ''}
+            <button class="btn ghost" style="padding:6px 10px;font-size:0.8rem" onclick="exportHistoryPdf('${id}', '${esc(c.title || id)}')">📄 PDF</button>
+            <button class="btn ghost" style="padding:6px 10px;font-size:0.8rem" onclick="exportHistoryCsv('${id}', '${esc(c.title || id)}')">⬇ CSV</button>
+          </div>
+        </div>
+      `;
+    }
+    container.innerHTML = html;
+  } catch(e) {
+    console.error(e);
+    container.innerHTML = `<div class='errtxt' style='padding:15px'>Erreur lors du chargement : ${e.message}</div>`;
+  }
+}
+
+window.switchRace = async function(newId) {
+  if (!confirm("Voulez-vous basculer la course active sur cette course ? L'écran du stade et le chronomètre pointeront dessus.")) return;
+  const s = await getCourseRef(newId).get();
+  const title = s.data()?.title || "Course";
+  await getActiveCourseRef().set({ courseId: newId, title, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+  courseId = newId;
+  listenCourse();
+  loadHistory();
+  alert(`Course basculée sur : ${title}`);
 };
+
+window.exportHistoryCsv = async function(raceDocId, raceTitle) {
+  const snap = await getEtabDoc().collection("courses").doc(raceDocId).collection("results").get();
+  const list = snap.docs.map(d => d.data());
+  list.sort((a,b)=>(Number(a.timeMs)||0)-(Number(b.timeMs)||0));
+  exportCourseCsv(raceDocId, raceTitle, list);
+};
+
+window.exportHistoryPdf = async function(raceDocId, raceTitle) {
+  const snap = await getEtabDoc().collection("courses").doc(raceDocId).collection("results").get();
+  const list = snap.docs.map(d => d.data());
+  list.sort((a,b)=>(Number(a.timeMs)||0)-(Number(b.timeMs)||0));
+  exportCoursePdf(raceDocId, raceTitle, list);
+};
+
+if($("refreshHistoryBtn")) $("refreshHistoryBtn").onclick = loadHistory;
 
 /* LECTEUR CSV UNIVERSEL */
 function readFileAsText(file) {
@@ -1381,6 +1586,7 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
   b.classList.add("active");
   $(b.dataset.tab).classList.add("active");
+  if(b.dataset.tab === "historyTab") loadHistory();
 });
 
 function enterScreen(){
