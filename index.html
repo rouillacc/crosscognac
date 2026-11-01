@@ -266,17 +266,24 @@ input:focus, select:focus {
 }
 .level input { accent-color: var(--navy); }
 
-/* SCANNER & CAMÉRA */
+/* SCANNER & CAMÉRA AMÉLIORÉ */
 #reader {
+  width: 100% !important;
   background: #000;
   border-radius: var(--radius-sm);
   overflow: hidden;
-  min-height: 160px;
-  max-height: 240px;
   margin-top: 6px;
-  border: 2px solid var(--border);
+  border: 2px solid var(--navy);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
-.scanline { font-size: 0.76rem; color: var(--muted); margin: 6px 0; }
+#reader video {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 320px;
+  object-fit: cover !important;
+  border-radius: var(--radius-sm);
+}
+.scanline { font-size: 0.78rem; color: var(--muted); margin: 6px 0; }
 
 .last {
   display: none;
@@ -737,7 +744,7 @@ th {
       <button id="exportPdfBtn" class="btn green">📄 Exporter PDF</button>
       <button id="exportBtn" class="btn">⬇ Exporter CSV</button>
     </div>
-    <div class="row" style="margin:10px 0">
+    <div class="row" style="margin-10px 0">
       <input id="filterText" class="grow" placeholder="Rechercher élève, classe, collège ou dossard…">
     </div>
     <div class="tablewrap">
@@ -912,6 +919,16 @@ function calcSpeed(timeMs, distanceKm){
   if (!timeMs || timeMs <= 0 || !distanceKm) return 0;
   const hours = timeMs / 3600000;
   return Math.round((distanceKm / hours) * 10) / 10;
+}
+
+// Fonction pour nettoyer les caractères japonais ou corrompus issus de Shift-JIS
+function sanitizeText(str){
+  if (!str) return "";
+  // Si le texte contient des katakanas/kanjis par erreur de décodage
+  if (/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(str)) {
+    return str.replace(/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/g, "").trim();
+  }
+  return str.trim();
 }
 
 function getEtabDoc(){ return db.collection("etablissements").doc(currentEtab); }
@@ -1104,24 +1121,22 @@ if($("newRaceBtn")) $("newRaceBtn").onclick=async()=>{
   loadHistory();
 };
 
-/* SCAN UNIVERSEL : EXTRACTION DIRECTE DU QR CODE COMPLET OU NUMÉRO SIMPLE */
+/* SCAN UNIVERSEL AVEC DÉCODAGE FIABILISÉ ET PRIORITÉ AUX DONNÉES PROPRES */
 async function recordArrival(raw){
   const rawStr = String(raw??"").trim();
   if(!rawStr) return;
 
   let bib = "", nom = "", prenom = "", sexe = "", cat = "", etab = "";
 
-  // Cas 1 : QR Code contenant les données complètes séparées par ';'
   if (rawStr.includes(";")) {
     const parts = rawStr.split(";").map(s => s.trim().replace(/^["']|["']$/g, ''));
     bib = String(parts[0] || "").replace(/[^\d]/g, "");
-    nom = parts[1] || "";
-    prenom = parts[2] || "";
-    sexe = (parts[3] || "").toUpperCase();
-    cat = (parts[4] || "").toUpperCase();
-    etab = parts[5] || "";
+    nom = sanitizeText(parts[1] || "");
+    prenom = sanitizeText(parts[2] || "");
+    sexe = (parts[3] || "").toUpperCase().trim();
+    cat = (parts[4] || "").toUpperCase().trim();
+    etab = sanitizeText(parts[5] || "");
   } else {
-    // Cas 2 : Numéro simple (saisie clavier ou ancien QR code)
     bib = rawStr.replace(/[^\d]/g, "");
   }
 
@@ -1135,19 +1150,25 @@ async function recordArrival(raw){
   const ref = getCourseRef(courseId);
   const resRef = ref.collection("results").doc("dossard_"+bib);
 
-  // Si des infos manquent dans le scan, recherche dans la base des élèves
+  // Recherche dans les élèves importés pour garantir des données parfaites sans fautes d'accents
   const numBib = parseInt(bib, 10);
   const st = students.find(s => String(s.dossard) === bib || parseInt(s.dossard, 10) === numBib);
 
-  nom = nom || st?.nom || "";
-  prenom = prenom || st?.prenom || "";
-  sexe = sexe || (st?.sexe || "").toUpperCase().trim();
-  cat = cat || (st?.categorie || "").toUpperCase().trim();
-  etab = etab || st?.etablissement || "";
-  const classeStr = st?.classe || st?.division || "";
+  if (st) {
+    nom = st.nom || nom;
+    prenom = st.prenom || prenom;
+    sexe = st.sexe || sexe;
+    cat = st.categorie || cat;
+    etab = st.etablissement || etab;
+  }
+
+  nom = sanitizeText(nom);
+  prenom = sanitizeText(prenom);
+  etab = sanitizeText(etab);
 
   const start = Number(courseData.startAtMs)||0;
   const timeMs = start > 0 ? Math.max(0, now - start) : 0;
+  const classeStr = st?.classe || st?.division || "";
 
   const distanceKm = (courseData && courseData.raceDistanceKm) ? Number(courseData.raceDistanceKm) : getDistanceKm(classeStr, cat);
   const speed = calcSpeed(timeMs, distanceKm);
@@ -1252,6 +1273,7 @@ async function cameras(){
   }
 }
 
+/* GESTION AMÉLIORÉE DU CADRAGE ET DE LA MIRE CAMÉRA */
 if($("cameraBtn")) $("cameraBtn").onclick=async()=>{
   if(scanning){
     try{await scanner.stop()}catch(e){}
@@ -1261,7 +1283,18 @@ if($("cameraBtn")) $("cameraBtn").onclick=async()=>{
   }
   try{
     scanner=scanner||new Html5Qrcode("reader");
-    await scanner.start($("cameraSelect").value,{fps:20,qrbox:{width:240,height:160}},txt=>recordArrival(txt),()=>{});
+    
+    // Calcul d'un cadre carré optimal (220x220px) pour viser le QR code sans déformation
+    const config = {
+      fps: 20,
+      qrbox: (viewfinderWidth, viewfinderHeight) => {
+        const edgeSize = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.7);
+        return { width: Math.max(200, edgeSize), height: Math.max(200, edgeSize) };
+      },
+      aspectRatio: 1.0
+    };
+
+    await scanner.start($("cameraSelect").value, config, txt=>recordArrival(txt), ()=>{});
     scanning=true;
     $("cameraBtn").textContent="⏹ Arrêter Caméra";
   }catch(e){
@@ -1734,7 +1767,7 @@ if($("csvFile")) $("csvFile").onchange = async e => {
   }
 };
 
-/* IMPRESSION DES DOSSARDS AVEC ENCODAGE DES DONNÉES COMPLÈTES */
+/* IMPRESSION DES DOSSARDS AVEC ENCODAGE UTF-8 SÉCURISÉ */
 $("printBibsBtn").onclick = () => {
   if (!students || students.length === 0) {
     alert("Veuillez d'abord importer un fichier CSV avec les élèves.");
@@ -1798,8 +1831,9 @@ function createBibCard(student, qrSize, isInterEtab) {
   setTimeout(() => {
     const container = card.querySelector("#" + qrId);
     if (container) {
+      // unescape(encodeURIComponent(...)) résout définitivement le bug des caractères japonais
       new QRCode(container, {
-        text: qrPayload,
+        text: unescape(encodeURIComponent(qrPayload)),
         width: qrSize,
         height: qrSize,
         colorDark: "#000000",
@@ -1832,7 +1866,7 @@ if(urlParams.get("mode")==="screen") enterScreen();
 cameras();
 init();
 
-/* SERVICE WORKER */
+/* SERVICE WORKER (PWA) */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("sw.js").catch(err => console.log("SW Reg Error:", err));
