@@ -266,7 +266,7 @@ input:focus, select:focus {
 }
 .level input { accent-color: var(--navy); }
 
-/* SCANNER & CAMÉRA AMÉLIORÉ */
+/* SCANNER & CAMÉRA */
 #reader {
   width: 100% !important;
   background: #000;
@@ -300,7 +300,7 @@ input:focus, select:focus {
 .last.duplicate { border-color: var(--track); background: var(--track-light); color: #7f1d1d; }
 @keyframes pop { from { transform: scale(0.98); } to { transform: scale(1); } }
 
-/* CLAVIER MANUEL COMPACT */
+/* CLAVIER MANUEL SANS CLAVIER TÉLÉPHONE */
 .manual-wrapper {
   background: #f8fafc;
   border: 1.5px solid var(--border);
@@ -326,6 +326,8 @@ input:focus, select:focus {
   flex: 1;
   padding: 4px 8px;
   min-width: 100px;
+  background: #fff;
+  cursor: default;
 }
 .pad {
   display: grid;
@@ -334,13 +336,13 @@ input:focus, select:focus {
   margin-top: 6px;
 }
 .pad button {
-  padding: 7px 4px;
+  padding: 9px 4px;
   border: 1px solid var(--border);
   background: #fff;
   color: var(--navy);
   border-radius: 4px;
   font-family: 'Oswald', sans-serif;
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   font-weight: 700;
 }
 .pad button:active { background: #e2e8f0; }
@@ -699,7 +701,8 @@ th {
       </div>
       <div id="padContainer" style="margin-top:6px">
         <div class="row">
-          <input id="manualBib" class="manual" type="number" inputmode="numeric" placeholder="N° Dossard" autocomplete="off">
+          <!-- inputmode="none" et readonly empêchent l'ouverture du clavier natif du téléphone -->
+          <input id="manualBib" class="manual" type="text" inputmode="none" readonly placeholder="N° Dossard" autocomplete="off">
           <button id="manualBtn" class="btn" style="padding:6px 14px">OK</button>
           <button id="backBtn" class="btn red" style="padding:6px 12px">⌫</button>
         </div>
@@ -792,7 +795,7 @@ th {
     </div>
   </div>
 
-  <!-- NOUVELLE FONCTIONNALITÉ : SYNCHRONISATION DIRECTE GOOGLE SHEET -->
+  <!-- SYNCHRONISATION DIRECTE GOOGLE SHEET -->
   <div class="card" style="border-left: 5px solid #15803d">
     <h2>📊 1. Synchronisation Google Sheets en direct</h2>
     <div class="muted" style="margin-bottom:10px">
@@ -969,7 +972,6 @@ if($("togglePadBtn")){
 async function init(){
   updateEtabUI();
   
-  // Restauration du lien Google Sheet sauvegardé
   if ($("sheetUrlInput")) {
     const savedSheetUrl = localStorage.getItem(`sheet_url_${currentEtab}`) || "";
     if (savedSheetUrl) $("sheetUrlInput").value = savedSheetUrl;
@@ -1244,16 +1246,21 @@ function showLastInstant(bib, arrival, dup){
   `;
 }
 
-if($("manualBtn")) $("manualBtn").onclick=()=>recordArrival($("manualBib").value);
-if($("manualBib")) $("manualBib").onkeydown=e=>{if(e.key==="Enter")recordArrival(e.target.value)};
-if($("backBtn")) $("backBtn").onclick=()=>{$("manualBib").value=$("manualBib").value.slice(0,-1);$("manualBib").focus()};
+/* GESTION DU CLAVIER VIRTUEL INTÉGRÉ SANS OUVERTURE DU CLAVIER TÉLÉPHONE */
+if($("manualBtn")) $("manualBtn").onclick = () => recordArrival($("manualBib").value);
+if($("backBtn")) $("backBtn").onclick = () => {
+  $("manualBib").value = $("manualBib").value.slice(0, -1);
+};
 
-document.querySelectorAll(".pad button").forEach(b=>b.onclick=()=>{
-  const k=b.dataset.key;
-  if(k==="C")$("manualBib").value="";
-  else if(k==="OK")recordArrival($("manualBib").value);
-  else $("manualBib").value+=k;
-  $("manualBib").focus();
+document.querySelectorAll(".pad button").forEach(b => b.onclick = () => {
+  const k = b.dataset.key;
+  if(k === "C") {
+    $("manualBib").value = "";
+  } else if(k === "OK") {
+    recordArrival($("manualBib").value);
+  } else {
+    $("manualBib").value += k;
+  }
 });
 
 async function cameras(){
@@ -1674,7 +1681,6 @@ function parseCSV(text) {
       }
     }
   } else {
-    // Si absence d'en-tête explicite (ordre standard : Dossard, Nom, Prénom, Sexe, Catégorie, Établissement)
     rawLines.forEach(l => {
       const parts = splitCSVLine(l, bestDelim);
       if (parts.length >= 2) {
@@ -1697,7 +1703,7 @@ function parseCSV(text) {
   return results;
 }
 
-// FONCTION COMMUNE D'ENREGISTREMENT DANS FIREBASE
+// FONCTION COMMUNE D'ENREGISTREMENT FIREBASE
 async function saveStudentsToFirebase(rows, infoElement) {
   if (!rows || !rows.length) {
     throw new Error("Aucun dossard valide détecté dans les données.");
@@ -1737,7 +1743,6 @@ if ($("syncSheetBtn")) {
       return;
     }
 
-    // Extraction de l'identifiant du Google Sheet
     const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
     if (!match || !match[1]) {
       alert("Le lien fourni ne ressemble pas à un lien Google Sheets valide.");
@@ -1747,7 +1752,6 @@ if ($("syncSheetBtn")) {
     const sheetId = match[1];
     localStorage.setItem(`sheet_url_${currentEtab}`, url);
 
-    // Endpoint d'export CSV public de Google Sheets
     const csvExportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
 
     try {
@@ -1756,7 +1760,7 @@ if ($("syncSheetBtn")) {
 
       const res = await fetch(csvExportUrl);
       if (!res.ok) {
-        throw new Error("Impossible d'accéder au fichier. Vérifiez que le partage est bien activé sur « Tous les utilisateurs disposant du lien ».");
+        throw new Error("Impossible d'accéder au fichier. Vérifiez que le partage est activé sur « Tous les utilisateurs disposant du lien ».");
       }
 
       const csvData = await res.text();
