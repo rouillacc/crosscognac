@@ -572,8 +572,9 @@ th {
   .bib-page.layout-8 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(4, 1fr); }
   .bib-page.layout-10 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(5, 1fr); }
   .bib-page.layout-16 { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); }
+  .bib-page.layout-20 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(10, 1fr); gap: 2mm; }
   .bib-page.layout-24 { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(6, 1fr); }
-  .bib-page.layout-50 { grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(10, 1fr); gap: 1.5mm; }
+  .bib-page.layout-30 { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(10, 1fr); gap: 1.5mm; }
 
   .bib-card {
     border: 1.5px dashed #475569;
@@ -601,39 +602,18 @@ th {
   .bib-name { font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65%; text-transform: uppercase; }
   .bib-class { font-weight: 700; text-align: right; }
 
-  .layout-8 .school-title { font-size: 8pt; }
-  .layout-8 .gender-tag { font-size: 8pt; }
-  .layout-8 .bib-number { font-size: 44pt; }
-  .layout-8 .bib-name { font-size: 11pt; }
-  .layout-8 .bib-class { font-size: 10pt; }
-  .layout-8 .bib-qr { width: 23mm; height: 23mm; }
-
-  .layout-10 .school-title { font-size: 7.5pt; }
-  .layout-10 .gender-tag { font-size: 7.5pt; }
-  .layout-10 .bib-number { font-size: 34pt; }
-  .layout-10 .bib-name { font-size: 9.5pt; }
-  .layout-10 .bib-class { font-size: 9pt; }
-  .layout-10 .bib-qr { width: 20mm; height: 20mm; }
-
-  .layout-16 .school-title { font-size: 6pt; }
-  .layout-16 .gender-tag { font-size: 6pt; }
-  .layout-16 .bib-number { font-size: 26pt; }
-  .layout-16 .bib-name { font-size: 7.5pt; }
-  .layout-16 .bib-class { font-size: 7pt; }
-  .layout-16 .bib-qr { width: 15mm; height: 15mm; }
-
-  .layout-24 .school-title { font-size: 5pt; }
-  .layout-24 .gender-tag { font-size: 5.5pt; }
-  .layout-24 .bib-number { font-size: 20pt; }
-  .layout-24 .bib-name { font-size: 6.5pt; }
-  .layout-24 .bib-class { font-size: 6pt; }
-  .layout-24 .bib-qr { width: 13mm; height: 13mm; }
-
-  .layout-50 .bib-card { padding: 1.5mm; border-width: 1px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; }
-  .layout-50 .bib-top, .layout-50 .bib-bottom { display: none; }
-  .layout-50 .bib-center { margin: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; }
-  .layout-50 .bib-number { font-size: 17pt; }
-  .layout-50 .bib-qr { width: 18mm; height: 18mm; padding: 0.5mm; }
+  .layout-20 .bib-card {
+    padding: 2mm 3mm;
+    border-width: 1px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .layout-20 .bib-top, .layout-20 .bib-bottom { display: none; }
+  .layout-20 .bib-center { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+  .layout-20 .bib-number { font-size: 26pt; }
+  .layout-20 .bib-qr { width: 23mm; height: 23mm; padding: 0.5mm; }
 }
 
 @media(max-width: 580px) {
@@ -708,7 +688,7 @@ th {
       <button id="cameraBtn" class="btn">📷 Activer Caméra</button>
     </div>
     <div id="reader"></div>
-    <div class="scanline">Visez le QR code (contenant dossard, nom, prénom, genre, catégorie et collège) :</div>
+    <div class="scanline">Visez le QR code (dossard, nom, prénom, genre, catégorie et collège) :</div>
 
     <div id="lastScan" class="last"></div>
 
@@ -744,7 +724,7 @@ th {
       <button id="exportPdfBtn" class="btn green">📄 Exporter PDF</button>
       <button id="exportBtn" class="btn">⬇ Exporter CSV</button>
     </div>
-    <div class="row" style="margin-10px 0">
+    <div class="row" style="margin:10px 0">
       <input id="filterText" class="grow" placeholder="Rechercher élève, classe, collège ou dossard…">
     </div>
     <div class="tablewrap">
@@ -781,7 +761,7 @@ th {
     <div class="row" style="margin-top:10px">
       <label style="display:flex;align-items:center;gap:8px;font-weight:700;cursor:pointer;color:var(--navy)">
         <input type="checkbox" id="interEtabCheckbox" checked style="accent-color:var(--navy);width:18px;height:18px">
-        <span>Mode Cross Inter-Établissements (affiche et imprime le collège d'origine de chaque élève)</span>
+        <span>Mode Cross Inter-Établissements (District / Bassin)</span>
       </label>
     </div>
   </div>
@@ -812,9 +792,22 @@ th {
     </div>
   </div>
 
+  <!-- NOUVELLE FONCTIONNALITÉ : SYNCHRONISATION DIRECTE GOOGLE SHEET -->
+  <div class="card" style="border-left: 5px solid #15803d">
+    <h2>📊 1. Synchronisation Google Sheets en direct</h2>
+    <div class="muted" style="margin-bottom:10px">
+      Collez le lien de partage de votre Google Sheet (mode <i>« Tous les utilisateurs disposant du lien peuvent consulter »</i>) et synchronisez instantanément :
+    </div>
+    <div class="row" style="gap:8px">
+      <input id="sheetUrlInput" class="grow" placeholder="https://docs.google.com/spreadsheets/d/.../edit?usp=sharing" style="font-size:0.88rem">
+      <button id="syncSheetBtn" class="btn green">🔄 Mettre à jour la base de données</button>
+    </div>
+    <div id="sheetSyncInfo" class="muted" style="margin-top:8px;font-weight:600"></div>
+  </div>
+
   <div class="card">
-    <h2>📥 1. Importer les élèves</h2>
-    <div class="muted" style="margin-bottom:10px">Format accepté : <b>Dossard;Nom;Prenom;Sexe;Categorie;Classe;Etablissement</b>[span_6](start_span)[span_6](end_span).</div>
+    <h2>📥 2. Importer via fichier CSV classique (Secours)</h2>
+    <div class="muted" style="margin-bottom:10px">Format accepté : <b>Dossard;Nom;Prenom;Sexe;Categorie;Classe;Etablissement</b>[cite: 1].</div>
     <div class="importbox">
       <input id="csvFile" class="file" type="file" accept=".csv,text/csv,text/plain">
       <div class="row" style="justify-content:center;gap:10px">
@@ -826,14 +819,15 @@ th {
   </div>
 
   <div class="card">
-    <h2>🖨️ 2. Impression des Dossards</h2>
-    <div class="muted" style="margin-bottom:10px">Sélectionnez la planche souhaitée (les données complètes sont encodées dans le QR code) :</div>
+    <h2>🖨️ 3. Impression des Dossards</h2>
+    <div class="muted" style="margin-bottom:10px">Sélectionnez la planche souhaitée :</div>
     <div class="row">
       <select id="bibsPerPageSelect" style="font-weight:700">
-        <option value="50">50 par page (Autocollants 5×10)</option>
+        <option value="20" selected>20 par page (Planche 2×10 — 105×29,7 mm)</option>
+        <option value="30">30 par page (Planche 3×10 — 70×29,7 mm)</option>
         <option value="24">24 par page (Autocollants 4×6)</option>
         <option value="16">16 par page (Badges compacts 4×4)</option>
-        <option value="10" selected>10 par page (Standard 2×5)</option>
+        <option value="10">10 par page (Standard 2×5)</option>
         <option value="8">8 par page (Grands dossards 2×4)</option>
       </select>
       <button id="printBibsBtn" class="btn yellow">🖨️ Imprimer les dossards</button>
@@ -921,10 +915,8 @@ function calcSpeed(timeMs, distanceKm){
   return Math.round((distanceKm / hours) * 10) / 10;
 }
 
-// Fonction pour nettoyer les caractères japonais ou corrompus issus de Shift-JIS
 function sanitizeText(str){
   if (!str) return "";
-  // Si le texte contient des katakanas/kanjis par erreur de décodage
   if (/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(str)) {
     return str.replace(/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/g, "").trim();
   }
@@ -976,6 +968,13 @@ if($("togglePadBtn")){
 
 async function init(){
   updateEtabUI();
+  
+  // Restauration du lien Google Sheet sauvegardé
+  if ($("sheetUrlInput")) {
+    const savedSheetUrl = localStorage.getItem(`sheet_url_${currentEtab}`) || "";
+    if (savedSheetUrl) $("sheetUrlInput").value = savedSheetUrl;
+  }
+
   try{
     diag("d1","⏳ SDK Firebase…","waittxt");
     if(!window.firebase) throw new Error("SDK Firebase absent");
@@ -1121,7 +1120,7 @@ if($("newRaceBtn")) $("newRaceBtn").onclick=async()=>{
   loadHistory();
 };
 
-/* SCAN UNIVERSEL AVEC DÉCODAGE FIABILISÉ ET PRIORITÉ AUX DONNÉES PROPRES */
+/* SCAN UNIVERSEL */
 async function recordArrival(raw){
   const rawStr = String(raw??"").trim();
   if(!rawStr) return;
@@ -1150,7 +1149,6 @@ async function recordArrival(raw){
   const ref = getCourseRef(courseId);
   const resRef = ref.collection("results").doc("dossard_"+bib);
 
-  // Recherche dans les élèves importés pour garantir des données parfaites sans fautes d'accents
   const numBib = parseInt(bib, 10);
   const st = students.find(s => String(s.dossard) === bib || parseInt(s.dossard, 10) === numBib);
 
@@ -1273,7 +1271,6 @@ async function cameras(){
   }
 }
 
-/* GESTION AMÉLIORÉE DU CADRAGE ET DE LA MIRE CAMÉRA */
 if($("cameraBtn")) $("cameraBtn").onclick=async()=>{
   if(scanning){
     try{await scanner.stop()}catch(e){}
@@ -1283,17 +1280,14 @@ if($("cameraBtn")) $("cameraBtn").onclick=async()=>{
   }
   try{
     scanner=scanner||new Html5Qrcode("reader");
-    
-    // Calcul d'un cadre carré optimal (220x220px) pour viser le QR code sans déformation
     const config = {
       fps: 20,
-      qrbox: (viewfinderWidth, viewfinderHeight) => {
-        const edgeSize = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.7);
-        return { width: Math.max(200, edgeSize), height: Math.max(200, edgeSize) };
+      qrbox: (w, h) => {
+        const edge = Math.floor(Math.min(w, h) * 0.7);
+        return { width: Math.max(200, edge), height: Math.max(200, edge) };
       },
       aspectRatio: 1.0
     };
-
     await scanner.start($("cameraSelect").value, config, txt=>recordArrival(txt), ()=>{});
     scanning=true;
     $("cameraBtn").textContent="⏹ Arrêter Caméra";
@@ -1592,26 +1586,7 @@ if($("downloadTemplateBtn")) $("downloadTemplateBtn").onclick = () => {
   URL.revokeObjectURL(a.href);
 };
 
-/* LECTEUR CSV UNIVERSEL */
-function readFileAsText(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      let text = e.target.result || "";
-      if (text.includes('\0')) {
-        const r16 = new FileReader();
-        r16.onload = ev => resolve((ev.target.result || "").replace(/\0/g, ''));
-        r16.onerror = () => resolve(text.replace(/\0/g, ''));
-        r16.readAsText(file, 'utf-16le');
-        return;
-      }
-      resolve(text);
-    };
-    reader.onerror = reject;
-    reader.readAsText(file, 'utf-8');
-  });
-}
-
+/* LECTEUR ET ANALYSEUR CSV UNIVERSEL */
 function splitCSVLine(line, sep) {
   let out = [], cur = "", q = false;
   for (let i = 0; i < line.length; i++) {
@@ -1630,8 +1605,8 @@ function parseCSV(text) {
   const rawLines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
   if (!rawLines.length) return [];
 
-  const delims = [';', '\t', ',', '|'];
-  let bestDelim = ';', maxScore = -1;
+  const delims = [',', ';', '\t', '|'];
+  let bestDelim = ',', maxScore = -1;
   delims.forEach(d => {
     let score = 0;
     rawLines.slice(0, 5).forEach(l => score += (l.split(d).length - 1));
@@ -1689,39 +1664,32 @@ function parseCSV(text) {
 
         results.push({
           dossard: bib,
-          nom: v(N),
-          prenom: v(P),
+          nom: sanitizeText(v(N)),
+          prenom: sanitizeText(v(P)),
           categorie: v(Cat).toUpperCase().trim(),
           classe: classeTxt,
-          etablissement: v(Etab),
+          etablissement: sanitizeText(v(Etab)),
           sexe: v(S).toUpperCase().trim()
         });
       }
     }
   } else {
+    // Si absence d'en-tête explicite (ordre standard : Dossard, Nom, Prénom, Sexe, Catégorie, Établissement)
     rawLines.forEach(l => {
       const parts = splitCSVLine(l, bestDelim);
-      let bib = "", nom = "", prenom = "", sexe = "", classe = "", categorie = "", etablissement = "";
-      parts.forEach(p => {
-        const onlyNum = cleanBib(p);
-        if (onlyNum && !bib && p === onlyNum) {
-          bib = onlyNum;
-        } else if (["M", "F", "G", "H", "GARCON", "FILLE"].includes(p.toUpperCase()) && !sexe) {
-          sexe = p.toUpperCase();
-        } else if (["BF", "BG", "MF", "MG", "CF", "CG", "BENJ", "MIN"].includes(p.toUpperCase()) && !categorie) {
-          categorie = p.toUpperCase();
-        } else if (!nom) {
-          nom = p;
-        } else if (!prenom) {
-          prenom = p;
-        } else if (!classe) {
-          classe = p;
-        } else if (!etablissement) {
-          etablissement = p;
+      if (parts.length >= 2) {
+        const bib = cleanBib(parts[0]);
+        if (bib) {
+          results.push({
+            dossard: bib,
+            nom: sanitizeText(parts[1] || ""),
+            prenom: sanitizeText(parts[2] || ""),
+            sexe: (parts[3] || "").toUpperCase().trim(),
+            categorie: (parts[4] || "").toUpperCase().trim(),
+            etablissement: sanitizeText(parts[5] || ""),
+            classe: ""
+          });
         }
-      });
-      if (bib) {
-        results.push({ dossard: bib, nom, prenom, categorie, classe, etablissement, sexe });
       }
     });
   }
@@ -1729,58 +1697,136 @@ function parseCSV(text) {
   return results;
 }
 
+// FONCTION COMMUNE D'ENREGISTREMENT DANS FIREBASE
+async function saveStudentsToFirebase(rows, infoElement) {
+  if (!rows || !rows.length) {
+    throw new Error("Aucun dossard valide détecté dans les données.");
+  }
+
+  if (!courseId) await ensureActiveCourse();
+  if (infoElement) infoElement.textContent = `Enregistrement de ${rows.length} élèves dans Firebase…`;
+
+  const etabCol = getEtabDoc().collection("students");
+  const raceCol = getCourseRef(courseId).collection("students");
+
+  for (let i = 0; i < rows.length; i += 300) {
+    const b = db.batch();
+    rows.slice(i, i + 300).forEach(s => {
+      b.set(etabCol.doc("dossard_" + s.dossard), s, { merge: true });
+      b.set(raceCol.doc("dossard_" + s.dossard), s, { merge: true });
+    });
+    await b.commit();
+  }
+
+  if (infoElement) {
+    infoElement.textContent = `✅ ${rows.length} élèves synchronisés avec succès dans la base !`;
+    infoElement.style.color = "var(--green)";
+  }
+}
+
+/* SYNCHRONISATION EN DIRECT DEPUIS LE GOOGLE SHEET */
+if ($("syncSheetBtn")) {
+  $("syncSheetBtn").onclick = async () => {
+    const url = $("sheetUrlInput").value.trim();
+    const info = $("sheetSyncInfo");
+    info.style.color = "var(--muted)";
+    info.textContent = "";
+
+    if (!url) {
+      alert("Veuillez d'abord coller le lien de votre Google Sheet.");
+      return;
+    }
+
+    // Extraction de l'identifiant du Google Sheet
+    const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    if (!match || !match[1]) {
+      alert("Le lien fourni ne ressemble pas à un lien Google Sheets valide.");
+      return;
+    }
+
+    const sheetId = match[1];
+    localStorage.setItem(`sheet_url_${currentEtab}`, url);
+
+    // Endpoint d'export CSV public de Google Sheets
+    const csvExportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+
+    try {
+      $("syncSheetBtn").disabled = true;
+      info.textContent = "Téléchargement des données Google Sheet en cours…";
+
+      const res = await fetch(csvExportUrl);
+      if (!res.ok) {
+        throw new Error("Impossible d'accéder au fichier. Vérifiez que le partage est bien activé sur « Tous les utilisateurs disposant du lien ».");
+      }
+
+      const csvData = await res.text();
+      const rows = parseCSV(csvData);
+
+      await saveStudentsToFirebase(rows, info);
+    } catch (err) {
+      console.error(err);
+      info.textContent = "❌ " + err.message;
+      info.style.color = "var(--track)";
+    } finally {
+      $("syncSheetBtn").disabled = false;
+    }
+  };
+}
+
+/* IMPORT FICHIER CSV CLASSIQUE */
 if($("importBtn")) $("importBtn").onclick = () => $("csvFile").click();
+
+function readFileAsText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      let text = e.target.result || "";
+      if (text.includes('\0')) {
+        const r16 = new FileReader();
+        r16.onload = ev => resolve((ev.target.result || "").replace(/\0/g, ''));
+        r16.onerror = () => resolve(text.replace(/\0/g, ''));
+        r16.readAsText(file, 'utf-16le');
+        return;
+      }
+      resolve(text);
+    };
+    reader.onerror = reject;
+    reader.readAsText(file, 'utf-8');
+  });
+}
 
 if($("csvFile")) $("csvFile").onchange = async e => {
   const f = e.target.files[0];
   if (!f) return;
-  $("importInfo").textContent = "Lecture et analyse du fichier…";
+  const info = $("importInfo");
+  info.textContent = "Lecture du fichier CSV…";
 
   try {
     const rawText = await readFileAsText(f);
     const rows = parseCSV(rawText);
-
-    if (!rows.length) {
-      throw new Error("Aucun dossard numérique détecté.");
-    }
-
-    if (!courseId) await ensureActiveCourse();
-    $("importInfo").textContent = `Enregistrement de ${rows.length} élèves dans Firebase…`;
-
-    const etabCol = getEtabDoc().collection("students");
-    const raceCol = getCourseRef(courseId).collection("students");
-
-    for (let i = 0; i < rows.length; i += 300) {
-      const b = db.batch();
-      rows.slice(i, i + 300).forEach(s => {
-        b.set(etabCol.doc("dossard_" + s.dossard), s, { merge: true });
-        b.set(raceCol.doc("dossard_" + s.dossard), s, { merge: true });
-      });
-      await b.commit();
-    }
-
-    $("importInfo").textContent = `✅ ${rows.length} élèves importés avec succès !`;
+    await saveStudentsToFirebase(rows, info);
     e.target.value = "";
   } catch (err) {
     console.error(err);
-    $("importInfo").textContent = "❌ " + err.message;
+    info.textContent = "❌ " + err.message;
+    info.style.color = "var(--track)";
   }
 };
 
-/* IMPRESSION DES DOSSARDS AVEC ENCODAGE UTF-8 SÉCURISÉ */
+/* IMPRESSION DES DOSSARDS */
 $("printBibsBtn").onclick = () => {
   if (!students || students.length === 0) {
-    alert("Veuillez d'abord importer un fichier CSV avec les élèves.");
+    alert("Veuillez d'abord synchroniser le Google Sheet ou importer un fichier CSV.");
     return;
   }
 
-  const perPage = parseInt($("bibsPerPageSelect").value, 10) || 10;
+  const perPage = parseInt($("bibsPerPageSelect").value, 10) || 20;
   const isInterEtab = $("interEtabCheckbox") && $("interEtabCheckbox").checked;
   const sorted = [...students].sort((a, b) => Number(a.dossard) - Number(b.dossard));
   const printSection = $("printSection");
   printSection.innerHTML = "";
 
-  const qrPixelSize = (perPage === 50) ? 68 : ((perPage >= 16) ? 58 : 84);
+  const qrPixelSize = (perPage === 20) ? 82 : ((perPage === 30) ? 68 : 75);
 
   for (let i = 0; i < sorted.length; i += perPage) {
     const page = document.createElement("div");
@@ -1809,8 +1855,6 @@ function createBibCard(student, qrSize, isInterEtab) {
   const catNom = student.categorie ? ` · ${student.categorie}` : "";
 
   const schoolTitle = (isInterEtab && student.etablissement) ? student.etablissement : currentEtab.toUpperCase();
-
-  // ENCODAGE COMPLET : Dossard;Nom;Prenom;Sexe;Categorie;Etablissement
   const qrPayload = `${student.dossard};${student.nom||''};${student.prenom||''};${student.sexe||''};${student.categorie||''};${student.etablissement||''}`;
 
   card.innerHTML = `
@@ -1831,7 +1875,6 @@ function createBibCard(student, qrSize, isInterEtab) {
   setTimeout(() => {
     const container = card.querySelector("#" + qrId);
     if (container) {
-      // unescape(encodeURIComponent(...)) résout définitivement le bug des caractères japonais
       new QRCode(container, {
         text: unescape(encodeURIComponent(qrPayload)),
         width: qrSize,
@@ -1866,7 +1909,7 @@ if(urlParams.get("mode")==="screen") enterScreen();
 cameras();
 init();
 
-/* SERVICE WORKER (PWA) */
+/* SERVICE WORKER */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("sw.js").catch(err => console.log("SW Reg Error:", err));
