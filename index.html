@@ -219,6 +219,26 @@ input:focus, select:focus {
 .btn.ghost:hover { background: #f8fafc; border-color: var(--navy); }
 .btn.yellow { background: var(--yellow); }
 
+/* MODALE DE CRÉATION DE COURSE */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 14px;
+}
+.modal-box {
+  background: #fff;
+  border-radius: var(--radius-md);
+  max-width: 480px;
+  width: 100%;
+  padding: 18px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
 /* CHRONOMÈTRE */
 .chrono {
   background: #0f172a;
@@ -247,24 +267,6 @@ input:focus, select:focus {
   letter-spacing: 2px;
   text-transform: uppercase;
 }
-
-.levels { display: flex; gap: 5px; flex-wrap: wrap; }
-.level {
-  border: 1.5px solid var(--border);
-  background: #f8fafc;
-  border-radius: 999px;
-  padding: 4px 10px;
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-.level:has(input:checked) {
-  border-color: var(--navy);
-  background: #eff6ff;
-  color: var(--navy);
-}
-.level input { accent-color: var(--navy); }
 
 /* SCANNER & CAMÉRA */
 #reader {
@@ -300,7 +302,7 @@ input:focus, select:focus {
 .last.duplicate { border-color: var(--track); background: var(--track-light); color: #7f1d1d; }
 @keyframes pop { from { transform: scale(0.98); } to { transform: scale(1); } }
 
-/* CLAVIER MANUEL SANS CLAVIER TÉLÉPHONE */
+/* CLAVIER MANUEL SANS OUVERTURE DU CLAVIER MOBILE */
 .manual-wrapper {
   background: #f8fafc;
   border: 1.5px solid var(--border);
@@ -426,14 +428,14 @@ th {
 .screenPage.active { display: block; }
 .screen {
   min-height: 100vh;
-  padding: 18px 12px;
+  padding: 14px 12px;
   background: #0f172a;
   color: #fff;
   text-align: center;
 }
 .screen-header-tag {
   font-family: 'Oswald', sans-serif;
-  font-size: 1rem;
+  font-size: 0.95rem;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: #94a3b8;
@@ -444,7 +446,7 @@ th {
 }
 .screen h1 {
   font-family: 'Oswald', sans-serif;
-  font-size: clamp(2.2rem, 6vw, 4.2rem);
+  font-size: clamp(2rem, 5vw, 3.8rem);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -454,12 +456,47 @@ th {
 .screen .sub {
   color: #38bdf8;
   font-family: 'Oswald', sans-serif;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   letter-spacing: 1.5px;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
   text-transform: uppercase;
 }
-.live { max-width: 1080px; margin: auto; text-align: left; }
+
+/* BARRE DE RECHERCHE TABLETTE */
+.screen-search-bar {
+  max-width: 600px;
+  margin: 0 auto 12px auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.screen-search-input {
+  flex: 1;
+  background: #1e293b;
+  border: 1.5px solid #475569;
+  color: #fff;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 0.95rem;
+}
+.screen-search-input::placeholder { color: #94a3b8; }
+.screen-search-input:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }
+
+/* CONTENEUR DU CLASSEMENT DÉFILANT */
+.live {
+  max-width: 1080px;
+  margin: auto;
+  text-align: left;
+  max-height: calc(100vh - 210px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+.live::-webkit-scrollbar { width: 10px; }
+.live::-webkit-scrollbar-track { background: #1e293b; border-radius: 8px; }
+.live::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 8px; border: 2px solid #0f172a; }
+.live::-webkit-scrollbar-thumb:hover { background: #0284c7; }
 
 .liveitem {
   display: grid;
@@ -469,8 +506,8 @@ th {
   background: #1e293b;
   border-left: 8px solid #64748b;
   border-radius: 8px;
-  padding: 12px 16px;
-  margin: 8px 0;
+  padding: 10px 14px;
+  margin: 6px 0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   animation: slideIn 0.3s ease-out;
 }
@@ -495,14 +532,14 @@ th {
 
 .liveRank {
   font-family: 'Oswald', sans-serif;
-  font-size: 2.1rem;
+  font-size: 2rem;
   font-weight: 700;
   text-align: center;
   color: #e2e8f0;
 }
 .liveName {
   font-family: 'Oswald', sans-serif;
-  font-size: clamp(1.2rem, 3.6vw, 2.1rem);
+  font-size: clamp(1.15rem, 3.4vw, 1.9rem);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -511,9 +548,9 @@ th {
 }
 .liveMeta {
   color: #94a3b8;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  margin-top: 4px;
+  margin-top: 3px;
   display: flex;
   gap: 8px;
   align-items: center;
@@ -546,13 +583,13 @@ th {
 }
 .liveTime {
   font-family: 'JetBrains Mono', monospace;
-  font-size: clamp(1.3rem, 4vw, 2.3rem);
+  font-size: clamp(1.2rem, 3.8vw, 2.1rem);
   font-weight: 800;
   color: #fbbf24;
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
-.empty { padding: 90px 20px; color: #64748b; text-align: center; font-size: 1.25rem; font-family: 'Oswald', sans-serif; text-transform: uppercase; }
+.empty { padding: 80px 20px; color: #64748b; text-align: center; font-size: 1.25rem; font-family: 'Oswald', sans-serif; text-transform: uppercase; }
 
 /* IMPRESSION DOSSARDS */
 #printSection { display: none; }
@@ -650,25 +687,22 @@ th {
 <section id="liveTab" class="tab active">
   <div class="card">
     <div class="row">
-      <input id="raceTitle" class="grow" value="Course 1" style="font-family:'Oswald',sans-serif;font-size:1.05rem;font-weight:600">
-      <button class="btn ghost" id="newRaceBtn">＋ Nouvelle course</button>
+      <input id="raceTitle" class="grow" placeholder="Nom de la course" style="font-family:'Oswald',sans-serif;font-size:1.15rem;font-weight:700">
+      <button class="btn" id="saveTitleBtn">💾 Valider Nom</button>
+      <button class="btn ghost" id="openNewRaceModalBtn">＋ Nouvelle course</button>
     </div>
 
-    <!-- DISTANCE RÉGLABLE AU DÉPART -->
-    <div class="row" style="margin-top:8px;background:#f8fafc;padding:6px 10px;border-radius:6px;border:1.5px solid var(--border)">
-      <label style="font-weight:700;font-size:0.85rem">📏 Distance de la course :</label>
-      <input id="raceDistanceInput" type="number" step="0.1" min="0.1" value="1.7" style="width:75px;font-weight:800;text-align:center;padding:5px 4px">
-      <span style="font-weight:700;font-size:0.85rem">km</span>
-      <button type="button" id="btnDist17" class="btn ghost" style="padding:4px 8px;font-size:0.75rem">1,7 km (6e/5e/BF/BG)</button>
-      <button type="button" id="btnDist20" class="btn ghost" style="padding:4px 8px;font-size:0.75rem">2,0 km (4e/3e/MF/MG)</button>
-    </div>
-
-    <div class="levels" style="margin-top:8px">
-      <label class="level"><input type="checkbox" value="CM2"> CM2</label>
-      <label class="level"><input type="checkbox" value="6E" checked> 6èmes</label>
-      <label class="level"><input type="checkbox" value="5E"> 5èmes</label>
-      <label class="level"><input type="checkbox" value="4E"> 4èmes</label>
-      <label class="level"><input type="checkbox" value="3E"> 3èmes</label>
+    <!-- PARAMÈTRES SIMPLIFIÉS : CATÉGORIE LIBRE & DISTANCE LIBRE -->
+    <div class="row" style="margin-top:10px;background:#f8fafc;padding:8px 12px;border-radius:6px;border:1.5px solid var(--border);gap:12px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <label style="font-weight:700;font-size:0.85rem">🏷️ Catégorie :</label>
+        <input id="raceCategoryInput" type="text" placeholder="Ex: BENJ, MIN, 6E..." style="width:130px;font-weight:700;text-transform:uppercase">
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <label style="font-weight:700;font-size:0.85rem">📏 Distance :</label>
+        <input id="raceDistanceInput" type="number" step="0.1" min="0.1" value="1.7" style="width:75px;font-weight:800;text-align:center">
+        <span style="font-weight:700;font-size:0.85rem">km</span>
+      </div>
     </div>
     
     <div class="chrono">
@@ -678,7 +712,7 @@ th {
     
     <div class="row" style="justify-content:center">
       <button id="startBtn" class="btn green">▶ Top départ</button>
-      <button id="stopBtn" class="btn red">■ Clôturer</button>
+      <button id="stopBtn" class="btn red">■ Clôturer la course</button>
       <button id="resetBtn" class="btn ghost">↻ Reset</button>
     </div>
   </div>
@@ -690,7 +724,7 @@ th {
       <button id="cameraBtn" class="btn">📷 Activer Caméra</button>
     </div>
     <div id="reader"></div>
-    <div class="scanline">Visez le QR code (dossard, nom, prénom, genre, catégorie et collège) :</div>
+    <div class="scanline">Visez le QR code (touchez l'écran vidéo pour faire la mise au point manuelle si besoin) :</div>
 
     <div id="lastScan" class="last"></div>
 
@@ -701,7 +735,6 @@ th {
       </div>
       <div id="padContainer" style="margin-top:6px">
         <div class="row">
-          <!-- inputmode="none" et readonly empêchent l'ouverture du clavier natif du téléphone -->
           <input id="manualBib" class="manual" type="text" inputmode="none" readonly placeholder="N° Dossard" autocomplete="off">
           <button id="manualBtn" class="btn" style="padding:6px 14px">OK</button>
           <button id="backBtn" class="btn red" style="padding:6px 12px">⌫</button>
@@ -716,6 +749,21 @@ th {
     </div>
   </div>
 </section>
+
+<!-- MODALE CRÉATION DE COURSE -->
+<div id="newRaceModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h2 style="margin-top:0">🏁 Nouvelle Course</h2>
+    <p class="muted">Attribuez un titre explicite à cette course avant le départ :</p>
+    <div style="margin:14px 0">
+      <input id="modalRaceTitleInput" class="grow" style="width:100%;font-size:1.15rem;font-weight:700" placeholder="Ex: Course 1 — Benjamines Filles">
+    </div>
+    <div class="row" style="justify-content:flex-end;gap:8px">
+      <button id="cancelModalBtn" class="btn ghost">Annuler</button>
+      <button id="confirmNewRaceBtn" class="btn green">✓ Créer & Activer</button>
+    </div>
+  </div>
+</div>
 
 <section id="resultsTab" class="tab">
   <div class="card">
@@ -732,7 +780,7 @@ th {
     </div>
     <div class="tablewrap">
       <table>
-        <thead><tr><th>Pl. Scratch</th><th>Pl. Genre</th><th>Élève</th><th>Genre</th><th>Cat.</th><th>Classe</th><th>Collège</th><th>Dossard</th><th>Temps</th><th>Vitesse</th></tr></thead>
+        <thead id="resultsTableHead"></thead>
         <tbody id="resultsBody"></tbody>
       </table>
     </div>
@@ -764,7 +812,7 @@ th {
     <div class="row" style="margin-top:10px">
       <label style="display:flex;align-items:center;gap:8px;font-weight:700;cursor:pointer;color:var(--navy)">
         <input type="checkbox" id="interEtabCheckbox" checked style="accent-color:var(--navy);width:18px;height:18px">
-        <span>Mode Cross Inter-Établissements (District / Bassin)</span>
+        <span>Mode Cross Inter-Établissements (District / Bassin) — Affiche la colonne Catégorie et Collège</span>
       </label>
     </div>
   </div>
@@ -785,7 +833,7 @@ th {
       <div class="access-box">
         <div>
           <h4>📺 Écran Stade (Direct)</h4>
-          <p>Affichage grand écran avec les 10 dernières arrivées.</p>
+          <p>Affichage grand écran défilant pour les élèves avec recherche rapide.</p>
         </div>
         <div class="access-actions">
           <button id="openScreenBtn" class="btn green grow">📺 Ouvrir</button>
@@ -808,9 +856,26 @@ th {
     <div id="sheetSyncInfo" class="muted" style="margin-top:8px;font-weight:600"></div>
   </div>
 
+  <!-- TABLEAU D'APERÇU DES PARTICIPANTS IMPORTÉS DYNAMIQUE -->
+  <div class="card">
+    <div class="row">
+      <div class="grow">
+        <h2>👥 Participants importés dans la base</h2>
+        <div id="studentsCount" class="muted">0 participant enregistré</div>
+      </div>
+      <button id="clearStudentsBtn" class="btn red" style="padding:4px 10px;font-size:0.78rem">Vider les participants</button>
+    </div>
+    <div class="tablewrap" style="max-height:280px;margin-top:8px">
+      <table>
+        <thead id="studentsTableHead"></thead>
+        <tbody id="studentsTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
   <div class="card">
     <h2>📥 2. Importer via fichier CSV classique (Secours)</h2>
-    <div class="muted" style="margin-bottom:10px">Format accepté : <b>Dossard;Nom;Prenom;Sexe;Categorie;Classe;Etablissement</b>[cite: 1].</div>
+    <div id="csvFormatDescription" class="muted" style="margin-bottom:10px"></div>
     <div class="importbox">
       <input id="csvFile" class="file" type="file" accept=".csv,text/csv,text/plain">
       <div class="row" style="justify-content:center;gap:10px">
@@ -851,15 +916,23 @@ th {
 </section>
 </main>
 
+<!-- ÉCRAN EN DIRECT POUR TABLETTE / STADE -->
 <section id="screenPage" class="screenPage">
   <div class="screen">
     <div class="screen-header-tag">
       🏁 CROSS EPS · <span id="screenEtabDisplay" class="etab-badge"></span>
     </div>
-    <h1 id="screenRaceTitle">Course 1</h1>
+    <h1 id="screenRaceTitle">Course</h1>
     <div class="sub">
-      ● 10 DERNIÈRES ARRIVÉES EN DIRECT · TOTAL : <span id="screenCount">0</span>
+      ● ARRIVÉES EN DIRECT · TOTAL : <span id="screenCount">0</span>
     </div>
+
+    <!-- BARRE DE RECHERCHE TABLETTE -->
+    <div class="screen-search-bar">
+      <input id="screenSearchInput" class="screen-search-input" type="text" placeholder="🔍 Rechercher un élève, un dossard ou un collège…">
+      <button id="clearScreenSearchBtn" class="btn ghost" style="padding:6px 12px;border-radius:999px;font-size:0.8rem">✕</button>
+    </div>
+
     <div id="liveList" class="live"></div>
   </div>
 </section>
@@ -875,6 +948,7 @@ if (!currentEtab) currentEtab = "defaut";
 
 let db=null, courseId=null, courseData={}, results=[], students=[], scanner=null, scanning=false, timer=null, localStart=0;
 let lastScanTime=0, lastScanBib="";
+let wakeLock = null;
 
 const $=id=>document.getElementById(id);
 const fmt=ms=>{ms=Math.max(0,Number(ms)||0);return String(Math.floor(ms/60000)).padStart(2,"0")+":"+String(Math.floor(ms%60000/1000)).padStart(2,"0")+"."+Math.floor(ms%1000/100)};
@@ -882,32 +956,70 @@ function setStatus(t,c=""){ if($("firebaseStatus")){ $("firebaseStatus").textCon
 function diag(id,t,c){if($(id)){$(id).textContent=t;$(id).className=c||""}}
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 
-// RACCOURCIS DISTANCES
-if($("btnDist17")) $("btnDist17").onclick = () => { $("raceDistanceInput").value = "1.7"; saveRaceDistance(); };
-if($("btnDist20")) $("btnDist20").onclick = () => { $("raceDistanceInput").value = "2.0"; saveRaceDistance(); };
-if($("raceDistanceInput")) $("raceDistanceInput").onchange = saveRaceDistance;
-
-async function saveRaceDistance(){
-  const d = parseFloat($("raceDistanceInput").value) || 1.7;
-  if(courseId){
-    await getCourseRef(courseId).set({ raceDistanceKm: d }, { merge: true });
+/* MODULE AUDIO DE RETOUR SCAN */
+let audioCtx = null;
+function playScanBeep(isDuplicate = false) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    if (isDuplicate) {
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.3);
+    } else {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.15);
+    }
+  } catch(e) {
+    console.warn("Audio non supporté:", e);
   }
 }
 
-function getDistanceKm(classeStr, catStr){
+/* SCREEN WAKE LOCK API */
+async function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => {});
+    } catch (err) {
+      console.warn(`Wake Lock: ${err.message}`);
+    }
+  }
+}
+
+document.addEventListener('visibilitychange', async () => {
+  if (wakeLock !== null && document.visibilityState === 'visible' && urlParams.get("mode") === "screen") {
+    await requestWakeLock();
+  }
+});
+
+/* SAUVEGARDE DE LA DISTANCE ET CATÉGORIE LIBRES */
+async function saveCourseSettings(){
+  const d = parseFloat($("raceDistanceInput").value) || 1.7;
+  const cat = $("raceCategoryInput").value.trim().toUpperCase();
+  if(courseId){
+    await getCourseRef(courseId).set({ raceDistanceKm: d, raceCategory: cat }, { merge: true });
+  }
+}
+if($("raceDistanceInput")) $("raceDistanceInput").onchange = saveCourseSettings;
+if($("raceCategoryInput")) $("raceCategoryInput").onchange = saveCourseSettings;
+
+function getDistanceKm(){
   if (courseData && courseData.raceDistanceKm && Number(courseData.raceDistanceKm) > 0) {
     return Number(courseData.raceDistanceKm);
-  }
-  const cat = String(catStr || "").toUpperCase();
-  if (cat.includes("MF") || cat.includes("MG") || cat.includes("MINIME") || cat.includes("CF") || cat.includes("CG") || cat.includes("CADET")) {
-    return 2.0;
-  }
-  if (cat.includes("BF") || cat.includes("BG") || cat.includes("BENJAMIN")) {
-    return 1.7;
-  }
-  const c = String(classeStr || "").toUpperCase();
-  if (c.includes("4") || c.includes("3") || c.includes("4E") || c.includes("3E") || c.includes("4EME") || c.includes("3EME")) {
-    return 2.0;
   }
   return 1.7;
 }
@@ -930,10 +1042,60 @@ function getEtabDoc(){ return db.collection("etablissements").doc(currentEtab); 
 function getActiveCourseRef(){ return getEtabDoc().collection("config").doc("active"); }
 function getCourseRef(id){ return getEtabDoc().collection("courses").doc(id || courseId); }
 
+function isInterEtabMode() {
+  return $("interEtabCheckbox") && $("interEtabCheckbox").checked;
+}
+
 function updateEtabUI(){
   if($("currentEtabDisplay")) $("currentEtabDisplay").textContent = currentEtab;
   if($("screenEtabDisplay")) $("screenEtabDisplay").textContent = currentEtab;
   if($("etabInput")) $("etabInput").value = currentEtab;
+  updateDynamicHeaders();
+}
+
+/* MISE À JOUR DES EN-TÊTES DE TABLEAUX EN FONCTION DU MODE INTER/INTRA ÉTABLISSEMENT */
+function updateDynamicHeaders() {
+  const isInter = isInterEtabMode();
+  
+  // Tableau de l'onglet Établissement
+  const sHead = $("studentsTableHead");
+  if (sHead) {
+    if (isInter) {
+      sHead.innerHTML = `<tr><th>Dossard</th><th>Nom</th><th>Prénom</th><th>Sexe</th><th>Catégorie</th><th>Collège / Établissement</th></tr>`;
+    } else {
+      sHead.innerHTML = `<tr><th>Dossard</th><th>Nom</th><th>Prénom</th><th>Sexe</th><th>Classe</th></tr>`;
+    }
+  }
+
+  // Tableau de l'onglet Classement
+  const rHead = $("resultsTableHead");
+  if (rHead) {
+    if (isInter) {
+      rHead.innerHTML = `<tr><th>Pl. Scratch</th><th>Pl. Genre</th><th>Élève</th><th>Genre</th><th>Catégorie</th><th>Collège</th><th>Dossard</th><th>Temps</th><th>Vitesse</th></tr>`;
+    } else {
+      rHead.innerHTML = `<tr><th>Pl. Scratch</th><th>Pl. Genre</th><th>Élève</th><th>Genre</th><th>Classe</th><th>Dossard</th><th>Temps</th><th>Vitesse</th></tr>`;
+    }
+  }
+
+  // Description format CSV
+  const csvDesc = $("csvFormatDescription");
+  if (csvDesc) {
+    if (isInter) {
+      csvDesc.innerHTML = `Format attendu pour le cross inter-établissements : <b>Dossard;Nom;Prenom;Sexe;Categorie;Etablissement</b>`;
+    } else {
+      csvDesc.innerHTML = `Format attendu pour le cross d'établissement : <b>Dossard;Nom;Prenom;Sexe;Classe</b>`;
+    }
+  }
+
+  renderStudentsTable();
+  renderResults();
+}
+
+if ($("interEtabCheckbox")) {
+  $("interEtabCheckbox").onchange = () => {
+    localStorage.setItem(`inter_etab_${currentEtab}`, $("interEtabCheckbox").checked ? "1" : "0");
+    updateDynamicHeaders();
+  };
 }
 
 const getAdminUrl = () => `${location.origin}${location.pathname}?etab=${currentEtab}`;
@@ -970,6 +1132,11 @@ if($("togglePadBtn")){
 }
 
 async function init(){
+  const savedMode = localStorage.getItem(`inter_etab_${currentEtab}`);
+  if (savedMode !== null && $("interEtabCheckbox")) {
+    $("interEtabCheckbox").checked = (savedMode === "1");
+  }
+
   updateEtabUI();
   
   if ($("sheetUrlInput")) {
@@ -1015,7 +1182,7 @@ async function ensureActiveCourse(){
 async function loadCourseMeta(){
   const s = await getCourseRef(courseId).get();
   if(!s.exists){
-    await getCourseRef(courseId).set({title:"Course 1", raceDistanceKm:1.7, createdAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+    await getCourseRef(courseId).set({title:"Course 1", raceDistanceKm:1.7, raceCategory:"", createdAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
   }
 }
 
@@ -1041,20 +1208,17 @@ function listenCourse(){
 
   unsubMeta = ref.onSnapshot(s => {
     courseData = s.data() || {};
-    if($("raceTitle")) $("raceTitle").value = courseData.title || "Course 1";
-    if($("screenRaceTitle")) $("screenRaceTitle").textContent = courseData.title || "Course 1";
+    if($("raceTitle")) $("raceTitle").value = courseData.title || "";
+    if($("screenRaceTitle")) $("screenRaceTitle").textContent = courseData.title || "Course en attente";
     if($("raceDistanceInput") && courseData.raceDistanceKm) $("raceDistanceInput").value = courseData.raceDistanceKm;
+    if($("raceCategoryInput")) $("raceCategoryInput").value = courseData.raceCategory || "";
     updateTimerState();
   });
 
   unsubStudents = getEtabDoc().collection("students").onSnapshot(s => {
-    if (!s.empty) {
-      students = s.docs.map(d => ({id: d.id, ...d.data()}));
-    } else {
-      ref.collection("students").onSnapshot(sub => {
-        students = sub.docs.map(d => ({id: d.id, ...d.data()}));
-      });
-    }
+    students = s.docs.map(d => ({id: d.id, ...d.data()}));
+    students.sort((a,b) => (Number(a.dossard)||0) - (Number(b.dossard)||0));
+    renderStudentsTable();
   });
 
   unsubResults = ref.collection("results").onSnapshot(s => {
@@ -1089,15 +1253,24 @@ function startLocalTicker(){
 if($("startBtn")) $("startBtn").onclick=async()=>{
   const now=Date.now();
   const d = parseFloat($("raceDistanceInput").value) || 1.7;
-  await getCourseRef(courseId).set({startAtMs:now, finished:false, raceDistanceKm:d},{merge:true});
+  const cat = $("raceCategoryInput").value.trim().toUpperCase();
+  await getCourseRef(courseId).set({startAtMs:now, finished:false, raceDistanceKm:d, raceCategory:cat},{merge:true});
   localStart=now;
   startLocalTicker();
 };
 
+/* CLÔTURE DE COURSE AVEC ARCHIVAGE ET RÉINITIALISATION VISUELLE */
 if($("stopBtn")) $("stopBtn").onclick=async()=>{
+  if(!confirm("Clôturer définitivement la course actuelle et archiver son classement ?")) return;
   clearInterval(timer);
-  await getCourseRef(courseId).set({finished:true},{merge:true});
+  await getCourseRef(courseId).set({finished:true, closedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  
   if($("raceState")) $("raceState").textContent="COURSE CLÔTURÉE";
+  if($("raceTitle")) $("raceTitle").value = "";
+  if($("chrono")) $("chrono").textContent = "00:00.0";
+  if($("lastScan")) $("lastScan").className = "last";
+  
+  alert("Course clôturée et enregistrée dans l'historique ! Vous pouvez lancer la suivante.");
 };
 
 if($("resetBtn")) $("resetBtn").onclick=async()=>{
@@ -1108,16 +1281,39 @@ if($("resetBtn")) $("resetBtn").onclick=async()=>{
   if($("raceState")) $("raceState").textContent="EN ATTENTE DU DÉPART";
 };
 
-if($("raceTitle")) $("raceTitle").onchange=()=>getCourseRef(courseId).set({title:$("raceTitle").value||"Course"},{merge:true});
+/* VALIDATION EXPLICITE DU TITRE */
+async function saveRaceTitleExplicit() {
+  const t = $("raceTitle").value.trim() || "Course";
+  await getCourseRef(courseId).set({title: t},{merge:true});
+  await getActiveCourseRef().set({title: t},{merge:true});
+  $("saveTitleBtn").textContent = "✅ Enregistré !";
+  setTimeout(() => $("saveTitleBtn").textContent = "💾 Valider Nom", 2000);
+}
+if($("saveTitleBtn")) $("saveTitleBtn").onclick = saveRaceTitleExplicit;
+if($("raceTitle")) $("raceTitle").onkeydown = e => { if(e.key === "Enter") saveRaceTitleExplicit(); };
 
-if($("newRaceBtn")) $("newRaceBtn").onclick=async()=>{
-  if(!confirm("Créer une nouvelle course pour cet établissement ?")) return;
-  const id="course_"+Date.now();
-  const title = "Course " + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+/* MODALE NOUVELLE COURSE */
+if($("openNewRaceModalBtn")) $("openNewRaceModalBtn").onclick = () => {
+  $("modalRaceTitleInput").value = "Course " + (new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+  $("newRaceModal").classList.remove("hidden");
+  $("modalRaceTitleInput").focus();
+};
+
+if($("cancelModalBtn")) $("cancelModalBtn").onclick = () => {
+  $("newRaceModal").classList.add("hidden");
+};
+
+if($("confirmNewRaceBtn")) $("confirmNewRaceBtn").onclick = async () => {
+  const title = $("modalRaceTitleInput").value.trim() || "Course";
+  const id = "course_" + Date.now();
   const d = parseFloat($("raceDistanceInput").value) || 1.7;
-  await getCourseRef(id).set({title, startAtMs:0, finished:false, raceDistanceKm:d, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  const cat = $("raceCategoryInput").value.trim().toUpperCase();
+  
+  await getCourseRef(id).set({title, startAtMs:0, finished:false, raceDistanceKm:d, raceCategory:cat, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   await getActiveCourseRef().set({courseId:id, title, updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
-  courseId=id;
+  
+  courseId = id;
+  $("newRaceModal").classList.add("hidden");
   listenCourse();
   loadHistory();
 };
@@ -1127,7 +1323,7 @@ async function recordArrival(raw){
   const rawStr = String(raw??"").trim();
   if(!rawStr) return;
 
-  let bib = "", nom = "", prenom = "", sexe = "", cat = "", etab = "";
+  let bib = "", nom = "", prenom = "", sexe = "", cat = "", etab = "", classeStr = "";
 
   if (rawStr.includes(";")) {
     const parts = rawStr.split(";").map(s => s.trim().replace(/^["']|["']$/g, ''));
@@ -1160,7 +1356,11 @@ async function recordArrival(raw){
     sexe = st.sexe || sexe;
     cat = st.categorie || cat;
     etab = st.etablissement || etab;
+    classeStr = st.classe || st.division || "";
   }
+
+  // Si une catégorie globale de course a été renseignée dans l'entête et qu'elle manque
+  if (!cat && courseData.raceCategory) cat = courseData.raceCategory;
 
   nom = sanitizeText(nom);
   prenom = sanitizeText(prenom);
@@ -1168,9 +1368,7 @@ async function recordArrival(raw){
 
   const start = Number(courseData.startAtMs)||0;
   const timeMs = start > 0 ? Math.max(0, now - start) : 0;
-  const classeStr = st?.classe || st?.division || "";
-
-  const distanceKm = (courseData && courseData.raceDistanceKm) ? Number(courseData.raceDistanceKm) : getDistanceKm(classeStr, cat);
+  const distanceKm = getDistanceKm();
   const speed = calcSpeed(timeMs, distanceKm);
 
   try{
@@ -1194,6 +1392,7 @@ async function recordArrival(raw){
       });
     });
 
+    playScanBeep(dup);
     const arrivalData = { dossard: bib, nom, prenom, classe: classeStr, categorie: cat, etablissement: etab, sexe, timeMs, speedKmh: speed };
     showLastInstant(bib, arrivalData, dup);
   }catch(e){
@@ -1206,8 +1405,10 @@ function showLastInstant(bib, arrival, dup){
   if(!$("lastScan")) return;
   $("lastScan").className = "last show" + (dup ? " duplicate" : "");
   const nom = (arrival.nom || arrival.prenom) ? `${arrival.nom} ${arrival.prenom}` : `Dossard #${bib}`;
-  const cls = arrival.classe ? ` (${arrival.classe})` : "";
-  const col = arrival.etablissement ? ` · ${arrival.etablissement}` : "";
+  const isInter = isInterEtabMode();
+  const colOrCls = isInter 
+    ? (arrival.etablissement ? ` · ${arrival.etablissement}` : "") 
+    : (arrival.classe ? ` (${arrival.classe})` : "");
   
   if(dup){
     $("lastScan").innerHTML = `⚠️ <b>#${esc(bib)} ${esc(nom)}</b> est déjà enregistré !`;
@@ -1233,7 +1434,7 @@ function showLastInstant(bib, arrival, dup){
   $("lastScan").innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <div>
-        <div style="font-size:1.15rem">🏁 <b>#${esc(bib)} ${esc(nom)}</b>${esc(cls)}${esc(col)}</div>
+        <div style="font-size:1.15rem">🏁 <b>#${esc(bib)} ${esc(nom)}</b>${esc(colOrCls)}</div>
         <div style="margin-top:3px;font-size:0.9rem">
           Scratch : <b>${rankScratch}e / ${totalArrived}</b> · <b>${genderTitle}</b>${catBadge}
         </div>
@@ -1246,7 +1447,7 @@ function showLastInstant(bib, arrival, dup){
   `;
 }
 
-/* GESTION DU CLAVIER VIRTUEL INTÉGRÉ SANS OUVERTURE DU CLAVIER TÉLÉPHONE */
+/* CLAVIER MANUEL SANS CLAVIER MOBILE */
 if($("manualBtn")) $("manualBtn").onclick = () => recordArrival($("manualBib").value);
 if($("backBtn")) $("backBtn").onclick = () => {
   $("manualBib").value = $("manualBib").value.slice(0, -1);
@@ -1278,6 +1479,7 @@ async function cameras(){
   }
 }
 
+/* CAMÉRA AVEC ACCÉLÉRATION MATÉRIELLE ET TAP-TO-FOCUS */
 if($("cameraBtn")) $("cameraBtn").onclick=async()=>{
   if(scanning){
     try{await scanner.stop()}catch(e){}
@@ -1287,27 +1489,111 @@ if($("cameraBtn")) $("cameraBtn").onclick=async()=>{
   }
   try{
     scanner=scanner||new Html5Qrcode("reader");
-    const config = {
-      fps: 20,
-      qrbox: (w, h) => {
-        const edge = Math.floor(Math.min(w, h) * 0.7);
-        return { width: Math.max(200, edge), height: Math.max(200, edge) };
-      },
-      aspectRatio: 1.0
+    
+    const videoConstraints = {
+      deviceId: { exact: $("cameraSelect").value },
+      focusMode: "continuous",
+      width: { ideal: 1280, max: 1920 },
+      height: { ideal: 720, max: 1080 }
     };
-    await scanner.start($("cameraSelect").value, config, txt=>recordArrival(txt), ()=>{});
+
+    const config = {
+      fps: 25,
+      qrbox: (w, h) => {
+        const edge = Math.floor(Math.min(w, h) * 0.65);
+        return { width: Math.max(180, edge), height: Math.max(180, edge) };
+      },
+      aspectRatio: 1.0,
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: true
+      }
+    };
+
+    await scanner.start(videoConstraints, config, txt=>recordArrival(txt), ()=>{});
     scanning=true;
     $("cameraBtn").textContent="⏹ Arrêter Caméra";
+
+    setTimeout(async () => {
+      try {
+        const videoElem = document.querySelector("#reader video");
+        if (videoElem && videoElem.srcObject) {
+          const track = videoElem.srcObject.getVideoTracks()[0];
+          const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+
+          if (capabilities.focusMode && capabilities.focusMode.includes("continuous")) {
+            await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
+          }
+
+          videoElem.onclick = async () => {
+            try {
+              if (capabilities.focusMode && capabilities.focusMode.includes("continuous")) {
+                await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
+              }
+            } catch(err) {}
+          };
+        }
+      } catch (e) {
+        console.warn("Optimisation focus avancée ignorée:", e);
+      }
+    }, 500);
+
   }catch(e){
     alert("Impossible d'ouvrir la caméra : "+e.message);
   }
 };
 
+/* RENDU DU TABLEAU DES PARTICIPANTS IMPORTÉS DYNAMIQUE */
+function renderStudentsTable(){
+  const b = $("studentsTableBody");
+  if(!b) return;
+  const isInter = isInterEtabMode();
+  if($("studentsCount")) $("studentsCount").textContent = `${students.length} participant(s) enregistré(s)`;
+
+  if(!students.length){
+    b.innerHTML = `<tr><td colspan="${isInter?6:5}" style="text-align:center;color:#94a3b8;padding:20px">Aucun participant importé dans la base</td></tr>`;
+    return;
+  }
+
+  b.innerHTML = students.map(s => {
+    if(isInter){
+      return `<tr>
+        <td><b>${esc(s.dossard)}</b></td>
+        <td>${esc(s.nom)}</td>
+        <td>${esc(s.prenom)}</td>
+        <td>${esc(s.sexe)}</td>
+        <td><b>${esc(s.categorie||"—")}</b></td>
+        <td>${esc(s.etablissement||"—")}</td>
+      </tr>`;
+    } else {
+      return `<tr>
+        <td><b>${esc(s.dossard)}</b></td>
+        <td>${esc(s.nom)}</td>
+        <td>${esc(s.prenom)}</td>
+        <td>${esc(s.sexe)}</td>
+        <td><b>${esc(s.classe||s.division||s.categorie||"—")}</b></td>
+      </tr>`;
+    }
+  }).join("");
+}
+
+if ($("clearStudentsBtn")) {
+  $("clearStudentsBtn").onclick = async () => {
+    if(!confirm("Supprimer tous les participants de la base pour cet établissement ?")) return;
+    const snap = await getEtabDoc().collection("students").get();
+    const batch = db.batch();
+    snap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+    students = [];
+    renderStudentsTable();
+  };
+}
+
 /* RENDU CLASSEMENT OFFICIEL */
 function renderResults(){
   if(!$("resultsBody")) return;
+  const isInter = isInterEtabMode();
   const q=$("filterText").value.toLowerCase().trim();
-  let a=results.filter(r=>(r.nom+" "+r.prenom+" "+r.classe+" "+(r.etablissement||"")+" "+(r.categorie||"")+" "+r.dossard).toLowerCase().includes(q));
+  let a=results.filter(r=>(r.nom+" "+r.prenom+" "+(r.classe||"")+" "+(r.etablissement||"")+" "+(r.categorie||"")+" "+r.dossard).toLowerCase().includes(q));
   if($("resultCount")) $("resultCount").textContent=results.length+" arrivée(s) enregistrée(s)";
 
   const filles = results.filter(r => (r.sexe||"").toUpperCase().trim() === "F" || (r.sexe||"").toUpperCase().trim() === "FILLE");
@@ -1320,24 +1606,38 @@ function renderResults(){
       ? filles.findIndex(x => String(x.dossard) === String(r.dossard)) + 1
       : garcons.findIndex(x => String(x.dossard) === String(r.dossard)) + 1;
     
-    const dist = r.distanceKm || getDistanceKm(r.classe, r.categorie);
+    const dist = r.distanceKm || getDistanceKm();
     const speed = r.speedKmh || calcSpeed(r.timeMs, dist);
 
-    return `
-      <tr>
-        <td><span class="rank-badge ${scratchRank===1?'r1':(scratchRank===2?'r2':(scratchRank===3?'r3':''))}">${scratchRank}</span></td>
-        <td><b>${genderRank > 0 ? (isFille ? genderRank+'e F' : genderRank+'e G') : '—'}</b></td>
-        <td><b>${esc(r.nom||"—")}</b> ${esc(r.prenom||"")}</td>
-        <td>${esc(r.sexe||"—")}</td>
-        <td><b>${esc(r.categorie||"—")}</b></td>
-        <td>${esc(r.classe||"—")}</td>
-        <td>${esc(r.etablissement||currentEtab.toUpperCase())}</td>
-        <td><b>${esc(r.dossard)}</b></td>
-        <td><b>${fmt(r.timeMs)}</b></td>
-        <td><b>${speed > 0 ? speed + ' km/h' : '—'}</b></td>
-      </tr>
-    `;
-  }).join("")||"<tr><td colspan=10 style='text-align:center;color:#94a3b8;padding:36px'>Aucune arrivée pour le moment</td></tr>";
+    if (isInter) {
+      return `
+        <tr>
+          <td><span class="rank-badge ${scratchRank===1?'r1':(scratchRank===2?'r2':(scratchRank===3?'r3':''))}">${scratchRank}</span></td>
+          <td><b>${genderRank > 0 ? (isFille ? genderRank+'e F' : genderRank+'e G') : '—'}</b></td>
+          <td><b>${esc(r.nom||"—")}</b> ${esc(r.prenom||"")}</td>
+          <td>${esc(r.sexe||"—")}</td>
+          <td><b>${esc(r.categorie||"—")}</b></td>
+          <td>${esc(r.etablissement||currentEtab.toUpperCase())}</td>
+          <td><b>${esc(r.dossard)}</b></td>
+          <td><b>${fmt(r.timeMs)}</b></td>
+          <td><b>${speed > 0 ? speed + ' km/h' : '—'}</b></td>
+        </tr>
+      `;
+    } else {
+      return `
+        <tr>
+          <td><span class="rank-badge ${scratchRank===1?'r1':(scratchRank===2?'r2':(scratchRank===3?'r3':''))}">${scratchRank}</span></td>
+          <td><b>${genderRank > 0 ? (isFille ? genderRank+'e F' : genderRank+'e G') : '—'}</b></td>
+          <td><b>${esc(r.nom||"—")}</b> ${esc(r.prenom||"")}</td>
+          <td>${esc(r.sexe||"—")}</td>
+          <td><b>${esc(r.classe||"—")}</b></td>
+          <td><b>${esc(r.dossard)}</b></td>
+          <td><b>${fmt(r.timeMs)}</b></td>
+          <td><b>${speed > 0 ? speed + ' km/h' : '—'}</b></td>
+        </tr>
+      `;
+    }
+  }).join("")||`<tr><td colspan="${isInter?9:8}" style='text-align:center;color:#94a3b8;padding:36px'>Aucune arrivée pour le moment</td></tr>`;
 }
 
 /* RENDU GRAND ÉCRAN STADE */
@@ -1350,12 +1650,26 @@ function renderLive(){
     return;
   }
 
+  const query = ($("screenSearchInput") ? $("screenSearchInput").value : "").toLowerCase().trim();
+  const isInter = isInterEtabMode();
+
   const filles = results.filter(r => (r.sexe||"").toUpperCase().trim() === "F" || (r.sexe||"").toUpperCase().trim() === "FILLE");
   const garcons = results.filter(r => (r.sexe||"").toUpperCase().trim() === "M" || (r.sexe||"").toUpperCase().trim() === "G" || (r.sexe||"").toUpperCase().trim() === "GARCON");
 
-  const derniers=[...results].sort((x,y)=>(Number(y.scannedAtMs)||0)-(Number(x.scannedAtMs)||0)).slice(0, 10);
+  let tousLesArrivants = [...results].sort((x,y)=>(Number(y.scannedAtMs)||0)-(Number(x.scannedAtMs)||0));
 
-  $("liveList").innerHTML=derniers.map(r=>{
+  if (query) {
+    tousLesArrivants = tousLesArrivants.filter(r => 
+      (r.nom + " " + r.prenom + " " + (r.etablissement||"") + " " + (r.classe||"") + " " + (r.categorie||"") + " " + r.dossard).toLowerCase().includes(query)
+    );
+  }
+
+  if (tousLesArrivants.length === 0) {
+    $("liveList").innerHTML = "<div class='empty'>Aucun coureur correspondant à la recherche.</div>";
+    return;
+  }
+
+  $("liveList").innerHTML=tousLesArrivants.map(r=>{
     const rangScratch=results.findIndex(x=>String(x.dossard)===String(r.dossard))+1;
     const s=String(r.sexe||"").toUpperCase().trim();
     const isFille=s==="F"||s==="FILLE";
@@ -1368,11 +1682,14 @@ function renderLive(){
     const genderLabel = genderRank > 0 ? (isFille ? (genderRank === 1 ? "1re Fille" : `${genderRank}e F`) : (genderRank === 1 ? "1er Garçon" : `${genderRank}e G`)) : (isFille ? "Fille" : "Garçon");
 
     const nom=((r.nom||"")+" "+(r.prenom||"")).trim()||("Dossard #"+r.dossard);
-    const cls=r.classe?`<span class="badge">${esc(r.classe)}</span>`:"";
-    const cat=r.categorie?`<span class="badge" style="background:#0284c7;color:#fff">${esc(r.categorie)}</span>`:"";
-    const etab=r.etablissement?`<span class="badge">${esc(r.etablissement)}</span>`:"";
+    
+    // Affichage contextuel Catégorie/Collège ou Classe
+    const infoBadge = isInter
+      ? (r.categorie ? `<span class="badge" style="background:#0284c7;color:#fff">${esc(r.categorie)}</span>` : "") + 
+        (r.etablissement ? `<span class="badge">${esc(r.etablissement)}</span>` : "")
+      : (r.classe ? `<span class="badge">${esc(r.classe)}</span>` : "");
 
-    const dist = r.distanceKm || getDistanceKm(r.classe, r.categorie);
+    const dist = r.distanceKm || getDistanceKm();
     const speed = r.speedKmh || calcSpeed(r.timeMs, dist);
 
     let medal = "";
@@ -1387,9 +1704,7 @@ function renderLive(){
           <div class="liveName">${esc(nom)}</div>
           <div class="liveMeta">
             <span class="badge">Dossard <b>#${esc(r.dossard)}</b></span>
-            ${cls}
-            ${cat}
-            ${etab}
+            ${infoBadge}
             <span class="liveGenderTag">${genderLabel}</span>
             ${speed > 0 ? `<span class="liveSpeedBadge">⚡ ${speed} km/h</span>` : ''}
           </div>
@@ -1401,6 +1716,11 @@ function renderLive(){
 }
 
 if($("filterText")) $("filterText").oninput=renderResults;
+if($("screenSearchInput")) $("screenSearchInput").oninput = renderLive;
+if($("clearScreenSearchBtn")) $("clearScreenSearchBtn").onclick = () => {
+  $("screenSearchInput").value = "";
+  renderLive();
+};
 
 /* EXPORTS CSV ET PDF */
 if($("exportBtn")) $("exportBtn").onclick=()=>{
@@ -1412,19 +1732,30 @@ if($("exportPdfBtn")) $("exportPdfBtn").onclick=()=>{
 };
 
 function exportCourseCsv(cId, title, resList){
+  const isInter = isInterEtabMode();
   const filles = resList.filter(r => (r.sexe||"").toUpperCase().trim() === "F" || (r.sexe||"").toUpperCase().trim() === "FILLE");
   const garcons = resList.filter(r => (r.sexe||"").toUpperCase().trim() === "M" || (r.sexe||"").toUpperCase().trim() === "G" || (r.sexe||"").toUpperCase().trim() === "GARCON");
 
-  const rows=[
-    ["Pl. Scratch","Pl. Genre","Nom","Prénom","Sexe","Catégorie","Classe","Établissement","Dossard","Temps","Vitesse (km/h)"],
+  const header = isInter 
+    ? ["Pl. Scratch","Pl. Genre","Nom","Prénom","Sexe","Catégorie","Établissement","Dossard","Temps","Vitesse (km/h)"]
+    : ["Pl. Scratch","Pl. Genre","Nom","Prénom","Sexe","Classe","Dossard","Temps","Vitesse (km/h)"];
+
+  const rows = [
+    header,
     ...resList.map((r,i)=>{
       const isF = (r.sexe||"").toUpperCase().trim() === "F" || (r.sexe||"").toUpperCase().trim() === "FILLE";
       const gRank = isF ? (filles.findIndex(x=>String(x.dossard)===String(r.dossard))+1)+' F' : (garcons.findIndex(x=>String(x.dossard)===String(r.dossard))+1)+' G';
-      const dist = r.distanceKm || getDistanceKm(r.classe, r.categorie);
+      const dist = r.distanceKm || getDistanceKm();
       const spd = r.speedKmh || calcSpeed(r.timeMs, dist);
-      return [i+1, gRank, r.nom||"", r.prenom||"", r.sexe||"", r.categorie||"", r.classe||"", r.etablissement||currentEtab.toUpperCase(), r.dossard, fmt(r.timeMs), spd];
+
+      if(isInter){
+        return [i+1, gRank, r.nom||"", r.prenom||"", r.sexe||"", r.categorie||"", r.etablissement||currentEtab.toUpperCase(), r.dossard, fmt(r.timeMs), spd];
+      } else {
+        return [i+1, gRank, r.nom||"", r.prenom||"", r.sexe||"", r.classe||"", r.dossard, fmt(r.timeMs), spd];
+      }
     })
   ];
+
   const csv="\uFEFF"+rows.map(r=>r.map(x=>`"${String(x).replaceAll('"','""')}"`).join(";")).join("\n");
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
@@ -1440,6 +1771,7 @@ function exportCoursePdf(cId, title, resList){
   }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const isInter = isInterEtabMode();
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
@@ -1448,7 +1780,7 @@ function exportCoursePdf(cId, title, resList){
 
   doc.setFontSize(12);
   doc.setTextColor(185, 28, 28);
-  doc.text(`Classement Officiel : ${title}`, 14, 23);
+  doc.text(`Classement : ${title}`, 14, 23);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
@@ -1459,53 +1791,52 @@ function exportCoursePdf(cId, title, resList){
   const filles = resList.filter(r => (r.sexe||"").toUpperCase().trim() === "F" || (r.sexe||"").toUpperCase().trim() === "FILLE");
   const garcons = resList.filter(r => (r.sexe||"").toUpperCase().trim() === "M" || (r.sexe||"").toUpperCase().trim() === "G" || (r.sexe||"").toUpperCase().trim() === "GARCON");
 
+  const headCols = isInter 
+    ? [["Pl.", "Genre", "Élève (Nom & Prénom)", "Cat.", "Collège", "Doss.", "Temps", "Vitesse"]]
+    : [["Pl.", "Genre", "Élève (Nom & Prénom)", "Classe", "Doss.", "Temps", "Vitesse"]];
+
   const tableData = resList.map((r, i) => {
     const isF = (r.sexe||"").toUpperCase().trim() === "F" || (r.sexe||"").toUpperCase().trim() === "FILLE";
     const gRank = isF ? (filles.findIndex(x=>String(x.dossard)===String(r.dossard))+1)+' F' : (garcons.findIndex(x=>String(x.dossard)===String(r.dossard))+1)+' G';
-    const dist = r.distanceKm || getDistanceKm(r.classe, r.categorie);
+    const dist = r.distanceKm || getDistanceKm();
     const spd = (r.speedKmh || calcSpeed(r.timeMs, dist)) + " km/h";
 
-    return [
-      i + 1,
-      gRank,
-      ((r.nom || "") + " " + (r.prenom || "")).trim() || "—",
-      r.categorie || "—",
-      r.classe || "—",
-      r.etablissement || currentEtab.toUpperCase(),
-      r.dossard,
-      fmt(r.timeMs),
-      spd
-    ];
+    if (isInter) {
+      return [
+        i + 1,
+        gRank,
+        ((r.nom || "") + " " + (r.prenom || "")).trim() || "—",
+        r.categorie || "—",
+        r.etablissement || currentEtab.toUpperCase(),
+        r.dossard,
+        fmt(r.timeMs),
+        spd
+      ];
+    } else {
+      return [
+        i + 1,
+        gRank,
+        ((r.nom || "") + " " + (r.prenom || "")).trim() || "—",
+        r.classe || "—",
+        r.dossard,
+        fmt(r.timeMs),
+        spd
+      ];
+    }
   });
 
   doc.autoTable({
     startY: 32,
-    head: [["Pl.", "Genre", "Élève (Nom & Prénom)", "Cat.", "Classe", "Collège", "Doss.", "Temps", "Vitesse"]],
+    head: headCols,
     body: tableData,
     theme: "striped",
     headStyles: {
       fillColor: [30, 58, 138],
       textColor: [255, 255, 255],
       fontStyle: "bold",
-      fontSize: 8
+      fontSize: 8.5
     },
-    styles: { font: "helvetica", fontSize: 8, cellPadding: 2 },
-    columnStyles: {
-      0: { halign: "center", fontStyle: "bold", cellWidth: 9 },
-      1: { halign: "center", fontStyle: "bold", cellWidth: 14 },
-      2: { fontStyle: "bold", cellWidth: 48 },
-      3: { halign: "center", cellWidth: 12 },
-      4: { halign: "center", cellWidth: 16 },
-      5: { cellWidth: 32 },
-      6: { halign: "center", fontStyle: "bold", cellWidth: 14 },
-      7: { halign: "right", fontStyle: "bold", cellWidth: 19 },
-      8: { halign: "right", cellWidth: 19 }
-    },
-    didDrawPage: data => {
-      doc.setFontSize(8);
-      doc.setTextColor(150);
-      doc.text(`Cross EPS · ${currentEtab.toUpperCase()} — Page ${data.pageNumber} sur ${doc.internal.getNumberOfPages()}`, 14, doc.internal.pageSize.height - 8);
-    }
+    styles: { font: "helvetica", fontSize: 8.5, cellPadding: 2 }
   });
 
   doc.save(`classement_${currentEtab}_${title.replace(/[^a-z0-9_-]/gi,'_')}.pdf`);
@@ -1539,7 +1870,7 @@ async function loadHistory(){
         <div class="history-item ${isActive ? 'active-race' : ''}">
           <div>
             <div class="history-title">${esc(c.title || id)} ${isActive ? '· <span style="color:#15803d;font-size:0.85rem">(Active)</span>' : ''}</div>
-            <div class="history-meta">Créée le : ${dateLabel} · Statut : ${statusBadge} · <b>${count} arrivée(s)</b> · Dist : ${c.raceDistanceKm || 1.7} km</div>
+            <div class="history-meta">Créée le : ${dateLabel} · Statut : ${statusBadge} · <b>${count} arrivée(s)</b> · Dist : ${c.raceDistanceKm || 1.7} km · Cat : ${esc(c.raceCategory||"Non spécifiée")}</div>
           </div>
           <div class="row">
             ${!isActive ? `<button class="btn green" style="padding:6px 10px;font-size:0.8rem" onclick="switchRace('${id}')">👁️ Charger</button>` : ''}
@@ -1584,16 +1915,22 @@ window.exportHistoryPdf = async function(raceDocId, raceTitle) {
 if($("refreshHistoryBtn")) $("refreshHistoryBtn").onclick = loadHistory;
 
 if($("downloadTemplateBtn")) $("downloadTemplateBtn").onclick = () => {
-  const templateCsv = "\uFEFFDossard;Nom;Prenom;Sexe;Categorie;Classe;Etablissement\n1;DUPONT;Lucas;M;BF;6A;Collège Claudie Haigneré\n2;MARTIN;Emma;F;BF;6A;Collège Jean Monnet\n3;BERNARD;Noah;M;BG;5B;Collège Claudie Haigneré\n4;THOMAS;Léa;F;MF;4C;Collège René Caillié\n5;PETIT;Hugo;M;MG;3D;Collège Jean Monnet\n";
+  const isInter = isInterEtabMode();
+  let templateCsv = "";
+  if (isInter) {
+    templateCsv = "\uFEFFDossard;Nom;Prenom;Sexe;Categorie;Etablissement\n1;DUPONT;Lucas;M;BENJ;Collège Claudie Haigneré\n2;MARTIN;Emma;F;BENJ;Collège Jean Monnet\n3;BERNARD;Noah;M;MIN;Collège Claudie Haigneré\n";
+  } else {
+    templateCsv = "\uFEFFDossard;Nom;Prenom;Sexe;Classe\n1;DUPONT;Lucas;M;6A\n2;MARTIN;Emma;F;6B\n3;BERNARD;Noah;M;5A\n";
+  }
   const blob = new Blob([templateCsv], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "modele_eleves_cross_interetab.csv";
+  a.download = isInter ? "modele_eleves_cross_interetab.csv" : "modele_eleves_cross_college.csv";
   a.click();
   URL.revokeObjectURL(a.href);
 };
 
-/* LECTEUR ET ANALYSEUR CSV UNIVERSEL */
+/* LECTEUR ET ANALYSEUR CSV */
 function splitCSVLine(line, sep) {
   let out = [], cur = "", q = false;
   for (let i = 0; i < line.length; i++) {
@@ -1653,8 +1990,7 @@ function parseCSV(text) {
     const N = findCol(["nom"]);
     const P = findCol(["prenom", "first"]);
     const Cat = findCol(["cat", "categorie"]);
-    const C = findCol(["classe", "division", "groupe", "section", "div"]);
-    const Niv = findCol(["niveau"]);
+    const C = findCol(["classe", "division", "groupe", "section", "div", "niveau"]);
     const Etab = findCol(["etab", "college", "ecole", "structure"]);
     const S = findCol(["sexe", "genre", "civ"]);
 
@@ -1664,17 +2000,12 @@ function parseCSV(text) {
       const bib = cleanBib(v(D));
 
       if (bib) {
-        let classeTxt = v(C);
-        if (v(Niv) && v(Niv) !== classeTxt) {
-          classeTxt = classeTxt ? `${classeTxt} (${v(Niv)})` : v(Niv);
-        }
-
         results.push({
           dossard: bib,
           nom: sanitizeText(v(N)),
           prenom: sanitizeText(v(P)),
           categorie: v(Cat).toUpperCase().trim(),
-          classe: classeTxt,
+          classe: v(C),
           etablissement: sanitizeText(v(Etab)),
           sexe: v(S).toUpperCase().trim()
         });
@@ -1692,8 +2023,8 @@ function parseCSV(text) {
             prenom: sanitizeText(parts[2] || ""),
             sexe: (parts[3] || "").toUpperCase().trim(),
             categorie: (parts[4] || "").toUpperCase().trim(),
-            etablissement: sanitizeText(parts[5] || ""),
-            classe: ""
+            classe: (parts[4] || "").trim(),
+            etablissement: sanitizeText(parts[5] || "")
           });
         }
       }
@@ -1703,7 +2034,7 @@ function parseCSV(text) {
   return results;
 }
 
-// FONCTION COMMUNE D'ENREGISTREMENT FIREBASE
+// ENREGISTREMENT FIREBASE
 async function saveStudentsToFirebase(rows, infoElement) {
   if (!rows || !rows.length) {
     throw new Error("Aucun dossard valide détecté dans les données.");
@@ -1730,7 +2061,7 @@ async function saveStudentsToFirebase(rows, infoElement) {
   }
 }
 
-/* SYNCHRONISATION EN DIRECT DEPUIS LE GOOGLE SHEET */
+/* SYNCHRONISATION EN DIRECT GOOGLE SHEET */
 if ($("syncSheetBtn")) {
   $("syncSheetBtn").onclick = async () => {
     const url = $("sheetUrlInput").value.trim();
@@ -1751,7 +2082,6 @@ if ($("syncSheetBtn")) {
 
     const sheetId = match[1];
     localStorage.setItem(`sheet_url_${currentEtab}`, url);
-
     const csvExportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
 
     try {
@@ -1760,12 +2090,11 @@ if ($("syncSheetBtn")) {
 
       const res = await fetch(csvExportUrl);
       if (!res.ok) {
-        throw new Error("Impossible d'accéder au fichier. Vérifiez que le partage est activé sur « Tous les utilisateurs disposant du lien ».");
+        throw new Error("Impossible d'accéder au fichier. Vérifiez que le partage est bien activé sur « Tous les utilisateurs disposant du lien ».");
       }
 
       const csvData = await res.text();
       const rows = parseCSV(csvData);
-
       await saveStudentsToFirebase(rows, info);
     } catch (err) {
       console.error(err);
@@ -1825,7 +2154,7 @@ $("printBibsBtn").onclick = () => {
   }
 
   const perPage = parseInt($("bibsPerPageSelect").value, 10) || 20;
-  const isInterEtab = $("interEtabCheckbox") && $("interEtabCheckbox").checked;
+  const isInter = isInterEtabMode();
   const sorted = [...students].sort((a, b) => Number(a.dossard) - Number(b.dossard));
   const printSection = $("printSection");
   printSection.innerHTML = "";
@@ -1838,7 +2167,7 @@ $("printBibsBtn").onclick = () => {
 
     const slice = sorted.slice(i, i + perPage);
     slice.forEach(student => {
-      page.appendChild(createBibCard(student, qrPixelSize, isInterEtab));
+      page.appendChild(createBibCard(student, qrPixelSize, isInter));
     });
 
     printSection.appendChild(page);
@@ -1849,22 +2178,26 @@ $("printBibsBtn").onclick = () => {
   }, 400);
 };
 
-function createBibCard(student, qrSize, isInterEtab) {
+function createBibCard(student, qrSize, isInter) {
   const card = document.createElement("div");
   card.className = "bib-card";
 
   const sexe = student.sexe === "F" ? "F" : (student.sexe === "M" ? "G" : "");
   const qrId = "qr_" + student.dossard + "_" + Math.random().toString(36).substr(2, 5);
-  const classeNom = student.classe || student.division || student.niveau || "—";
-  const catNom = student.categorie ? ` · ${student.categorie}` : "";
+  
+  const tagDroit = isInter 
+    ? (student.categorie ? ` · ${student.categorie}` : "") 
+    : (student.classe ? ` · ${student.classe}` : "");
+  
+  const schoolTitle = (isInter && student.etablissement) ? student.etablissement : currentEtab.toUpperCase();
+  const bottomExtra = isInter ? (student.classe || "") : "";
 
-  const schoolTitle = (isInterEtab && student.etablissement) ? student.etablissement : currentEtab.toUpperCase();
   const qrPayload = `${student.dossard};${student.nom||''};${student.prenom||''};${student.sexe||''};${student.categorie||''};${student.etablissement||''}`;
 
   card.innerHTML = `
     <div class="bib-top">
       <span class="school-title">${esc(schoolTitle)}</span>
-      <span class="gender-tag">${esc(sexe)}${esc(catNom)}</span>
+      <span class="gender-tag">${esc(sexe)}${esc(tagDroit)}</span>
     </div>
     <div class="bib-center">
       <div class="bib-number">${esc(student.dossard)}</div>
@@ -1872,7 +2205,7 @@ function createBibCard(student, qrSize, isInterEtab) {
     </div>
     <div class="bib-bottom">
       <div class="bib-name">${esc(student.nom)} ${esc(student.prenom)}</div>
-      <div class="bib-class">${esc(classeNom)}</div>
+      <div class="bib-class">${esc(bottomExtra)}</div>
     </div>
   `;
 
@@ -1899,14 +2232,16 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
   b.classList.add("active");
   $(b.dataset.tab).classList.add("active");
   if(b.dataset.tab === "historyTab") loadHistory();
+  if(b.dataset.tab === "configTab") renderStudentsTable();
 });
 
-function enterScreen(){
+async function enterScreen(){
   if($("appHeader")) $("appHeader").classList.add("hidden");
   if($("mainNav")) $("mainNav").classList.add("hidden");
   if($("normalApp")) $("normalApp").classList.add("hidden");
   $("screenPage").classList.add("active");
   document.body.style.background="#0f172a";
+  await requestWakeLock();
 }
 
 if(urlParams.get("mode")==="screen") enterScreen();
